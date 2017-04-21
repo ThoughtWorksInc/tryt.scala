@@ -68,13 +68,6 @@ class TryTSpec extends AsyncFreeSpec with Matchers with Inside {
     }
   }
 
-  "Given a TryT transformed Future of Int" - {
-
-    "When point it to a TryT transformed Future of Int" - {
-      "And the point works fine" - {}
-    }
-  }
-
   "TryTMonadError point without exception" in {
     val tryTFutureInt: TryT[Future, Int] =
       MonadError[TryT[Future, ?], Throwable].point(1)
