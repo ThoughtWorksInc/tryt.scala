@@ -7,9 +7,9 @@ lazy val unidoc = project
     scalacOptions += "-Xexperimental"
   )
 
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.10"
+libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.11"
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.10" % Test
+libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.11" % Test
 
 libraryDependencies += "com.chrisneveu" %% "macrame" % "1.2.5"
 
