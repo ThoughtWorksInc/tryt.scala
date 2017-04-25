@@ -2,13 +2,13 @@ package com.thoughtworks
 import org.scalatest._
 
 import scalaz.std.AllInstances._
-import scalaz.{-\/, @@, Applicative, BindRec, Functor, MonadError, \/, \/-}
+import scalaz._
 import scala.concurrent.Promise
 import scalaz.concurrent.Future._
 import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 import scalaz.concurrent.Future
-import scala.util.control.NonFatal
+import scala.util.control.{NoStackTrace, NonFatal}
 import scalaz.Tags.Parallel
 import com.thoughtworks.tryt.TryT
 import com.thoughtworks.tryt.TryT._
@@ -18,6 +18,28 @@ object trytSpec {
 
   final case class AnotherBoom() extends Throwable
 
+  /** An exception that contains multiple Throwables. */
+  final case class MultipleException(throwableSet: Set[Throwable])
+      extends Exception("Multiple exceptions found")
+      with NoStackTrace {
+    override def toString: String = throwableSet.toString()
+  }
+
+  implicit def throwableSemigroup = new Semigroup[Throwable] {
+    override def append(f1: Throwable, f2: => Throwable): Throwable =
+      f1 match {
+        case MultipleException(exceptionSet1) =>
+          f2 match {
+            case MultipleException(exceptionSet2) => MultipleException(exceptionSet1 ++ exceptionSet2)
+            case _: Throwable => MultipleException(exceptionSet1 + f2)
+          }
+        case _: Throwable =>
+          f2 match {
+            case MultipleException(exceptionSet2) => MultipleException(exceptionSet2 + f1)
+            case _: Throwable => MultipleException(Set(f1, f2))
+          }
+      }
+  }
 }
 
 final class trytSpec extends AsyncFreeSpec with Matchers with Inside {

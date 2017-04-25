@@ -28,29 +28,6 @@ object tryt {
   }
 
   object TryT extends TryTInstances0 {
-
-    /** An exception that contains multiple Throwables. */
-    private[tryt] final case class MultipleException(throwableSet: Set[Throwable])
-        extends Exception("Multiple exceptions found")
-        with NoStackTrace {
-      override def toString: String = throwableSet.toString()
-    }
-
-    private[tryt] implicit def throwableSemigroup = new Semigroup[Throwable] {
-      override def append(f1: Throwable, f2: => Throwable): Throwable =
-        f1 match {
-          case MultipleException(exceptionSet1) =>
-            f2 match {
-              case MultipleException(exceptionSet2) => MultipleException(exceptionSet1 ++ exceptionSet2)
-              case _: Throwable => MultipleException(exceptionSet1 + f2)
-            }
-          case _: Throwable =>
-            f2 match {
-              case MultipleException(exceptionSet2) => MultipleException(exceptionSet2 + f1)
-              case _: Throwable => MultipleException(Set(f1, f2))
-            }
-        }
-    }
     private[thoughtworks] def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = extractor.unwrap(tryT)
     def unapply[F[_], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
     def apply[F[_], A](tryT: F[Try[A]]): TryT[F, A] = extractor.apply(tryT)
@@ -58,9 +35,11 @@ object tryt {
 
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
     implicit def tryTParallelApplicative[F[_]](
-        implicit F0: Applicative[Lambda[x => F[x] @@ Parallel]]): Applicative[Lambda[x => TryT[F, x] @@ Parallel]] = {
+        implicit F0: Applicative[Lambda[x => F[x] @@ Parallel]],
+        S0: Semigroup[Throwable]): Applicative[Lambda[x => TryT[F, x] @@ Parallel]] = {
       new TryTParallelApplicative[F] {
         override implicit def F: Applicative[Lambda[x => F[x] @@ Parallel]] = F0
+        override implicit def S: Semigroup[Throwable] = S0
       }
     }
   }
@@ -171,6 +150,7 @@ object tryt {
 
   protected trait TryTParallelApplicative[F[_]] extends Applicative[Lambda[x => TryT[F, x] @@ Parallel]] {
     implicit protected def F: Applicative[Lambda[x => F[x] @@ Parallel]]
+    implicit protected def S: Semigroup[Throwable]
     private type T[A] = TryT[F, A]
     private type P[A] = T[A] @@ Parallel
 
@@ -201,7 +181,6 @@ object tryt {
                 case Failure(failure) => Failure(failure)
               }
             case Failure(failure) =>
-              import tryt.TryT.throwableSemigroup
               tryAB match {
                 case Success(_) => Failure(failure)
                 case Failure(anotherFailure) =>
