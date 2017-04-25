@@ -33,7 +33,7 @@ final class trytSpec extends AsyncFreeSpec with Matchers with Inside {
         val result: TryT[Future, Int] = Functor[TryT[Future, ?]].map[Int, Int](parallelFutureInt) { int =>
           int * int
         }
-        val unwrap: Future[Try[Int]] = TryT.unwrap(result)
+        val TryT(unwrap) = result
         "Then the result should be as expected" in {
           val p = Promise[Assertion]
 

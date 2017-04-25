@@ -15,7 +15,6 @@ object tryt {
     def apply[F[_], A](run: F[Try[A]]): TryT[F, A]
     def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]]
 
-    final def unapply[F[_], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
   }
   //TODO : @delegate
   private[tryt] val extractor: TryTExtractor = new TryTExtractor {
@@ -52,8 +51,8 @@ object tryt {
             }
         }
     }
-
-    def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = extractor.unwrap(tryT)
+    private[thoughtworks] def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = extractor.unwrap(tryT)
+    def unapply[F[_], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
     def apply[F[_], A](tryT: F[Try[A]]): TryT[F, A] = extractor.apply(tryT)
   }
 
