@@ -3,7 +3,7 @@ package com.thoughtworks
 import scala.language.higherKinds
 
 object tryt {
-  import scala.util.control.{NoStackTrace, NonFatal}
+  import scala.util.control.NonFatal
   import scala.util.{Failure, Success, Try}
   import scalaz.{\/, _}
   import scala.language.higherKinds
@@ -161,9 +161,19 @@ object tryt {
 
     override def ap[A, B](fa: => P[A])(f: => P[(A) => B]): P[B] = {
 
-      val fTryAP: F[Try[A]] @@ Parallel = Parallel(extractor.unwrap(Parallel.unwrap(fa)))
+      val fTryAP: F[Try[A]] @@ Parallel = try {
+        Parallel(extractor.unwrap(Parallel.unwrap(fa)))
+      } catch {
+        case NonFatal(e) =>
+          F.point(Failure(e))
+      }
 
-      val fTryABP: F[Try[A => B]] @@ Parallel = Parallel(extractor.unwrap(Parallel.unwrap(f)))
+      val fTryABP: F[Try[A => B]] @@ Parallel = try {
+        Parallel(extractor.unwrap(Parallel.unwrap(f)): F[Try[A => B]])
+      } catch {
+        case NonFatal(e) =>
+          F.point(Failure(e))
+      }
 
       import scalaz.syntax.all._
 
