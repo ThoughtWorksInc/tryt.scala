@@ -28,6 +28,15 @@ object tryt {
   }
 
   object TryT extends TryTInstances0 {
+
+    implicit object TryTMonadTrans extends MonadTrans[TryT] {
+      override def liftM[G[_], A](a: G[A])(implicit monad: Monad[G]): TryT[G, A] = {
+        TryT(monad.map(a)(Success(_)))
+      }
+
+      override implicit def apply[G[_]: Monad]: Monad[TryT[G, ?]] = tryTMonadError
+    }
+
     private[thoughtworks] def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = extractor.unwrap(tryT)
     def unapply[F[_], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
     def apply[F[_], A](tryT: F[Try[A]]): TryT[F, A] = extractor.apply(tryT)
@@ -70,7 +79,7 @@ object tryt {
 
   import extractor._
 
-  protected trait TryTFunctor[F[_]] extends Functor[TryT[F, ?]] {
+  private[tryt] trait TryTFunctor[F[_]] extends Functor[TryT[F, ?]] {
     implicit protected def F: Functor[F]
 
     override def map[A, B](fa: TryT[F, A])(f: A => B): TryT[F, B] = {
@@ -82,7 +91,7 @@ object tryt {
     }
   }
 
-  protected trait TryTBind[F[_]] extends Bind[TryT[F, ?]] with TryTFunctor[F] {
+  private[tryt] trait TryTBind[F[_]] extends Bind[TryT[F, ?]] with TryTFunctor[F] {
     implicit protected override def F: Monad[F]
 
     override def bind[A, B](fa: TryT[F, A])(f: A => TryT[F, B]): TryT[F, B] = extractor {
@@ -101,7 +110,7 @@ object tryt {
     }
   }
 
-  protected trait TryTBindRec[F[_]] extends BindRec[TryT[F, ?]] with TryTBind[F] {
+  private[tryt] trait TryTBindRec[F[_]] extends BindRec[TryT[F, ?]] with TryTBind[F] {
     implicit protected def F: Monad[F]
     implicit protected def B: BindRec[F]
 
@@ -126,7 +135,7 @@ object tryt {
     }
   }
 
-  protected trait TryTMonadError[F[_]] extends MonadError[TryT[F, ?], Throwable] with TryTBind[F] {
+  private[tryt] trait TryTMonadError[F[_]] extends MonadError[TryT[F, ?], Throwable] with TryTBind[F] {
     implicit protected override def F: Monad[F]
 
     override def point[A](a: => A): TryT[F, A] = extractor.apply(F.point(Try(a)))
@@ -148,7 +157,7 @@ object tryt {
     }
   }
 
-  protected trait TryTParallelApplicative[F[_]] extends Applicative[Lambda[x => TryT[F, x] @@ Parallel]] {
+  private[tryt] trait TryTParallelApplicative[F[_]] extends Applicative[Lambda[x => TryT[F, x] @@ Parallel]] {
     implicit protected def F: Applicative[Lambda[x => F[x] @@ Parallel]]
     implicit protected def S: Semigroup[Throwable]
     private type T[A] = TryT[F, A]
