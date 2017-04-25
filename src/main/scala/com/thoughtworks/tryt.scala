@@ -21,15 +21,16 @@ object tryt {
 
     type TryT[F[_], A] = F[Try[A]]
 
-    override def apply[F[_], A](tryT: F[Try[A]]): TryT[F, A] = tryT
+    override final def apply[F[_], A](tryT: F[Try[A]]): TryT[F, A] = tryT
 
-    override def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = tryT
+    override final def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = tryT
 
   }
 
   object TryT extends TryTInstances0 {
 
-    implicit object TryTMonadTrans extends MonadTrans[TryT] {
+    @inline
+    implicit final def tryTMonadTrans: MonadTrans[TryT] = new MonadTrans[TryT] {
       override def liftM[G[_], A](a: G[A])(implicit monad: Monad[G]): TryT[G, A] = {
         TryT(monad.map(a)(Success(_)))
       }
@@ -43,7 +44,7 @@ object tryt {
   }
 
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
-    implicit def tryTParallelApplicative[F[_]](
+    implicit final def tryTParallelApplicative[F[_]](
         implicit F0: Applicative[Lambda[x => F[x] @@ Parallel]],
         S0: Semigroup[Throwable]): Applicative[Lambda[x => TryT[F, x] @@ Parallel]] = {
       new TryTParallelApplicative[F] {
@@ -54,7 +55,7 @@ object tryt {
   }
 
   private[tryt] sealed abstract class TryTInstances2 extends TryTInstances3 { this: TryT.type =>
-    implicit def tryTBindRec[F[_]](implicit F0: Monad[F], B0: BindRec[F]): BindRec[TryT[F, ?]] = {
+    implicit final def tryTBindRec[F[_]](implicit F0: Monad[F], B0: BindRec[F]): BindRec[TryT[F, ?]] = {
       new TryTBindRec[F] {
         override implicit def B: BindRec[F] = B0
         override implicit def F: Monad[F] = F0
@@ -63,7 +64,7 @@ object tryt {
   }
 
   private[tryt] sealed abstract class TryTInstances1 extends TryTInstances2 { this: TryT.type =>
-    implicit def tryTMonadError[F[_]](implicit F0: Monad[F]): MonadError[TryT[F, ?], Throwable] = {
+    implicit final def tryTMonadError[F[_]](implicit F0: Monad[F]): MonadError[TryT[F, ?], Throwable] = {
       new TryTMonadError[F] {
         implicit override def F: Monad[F] = F0
       }
@@ -71,7 +72,7 @@ object tryt {
   }
 
   private[tryt] sealed abstract class TryTInstances0 extends TryTInstances1 { this: TryT.type =>
-    implicit def tryTFunctor[F[_]](implicit F0: Functor[F]): Functor[TryT[F, ?]] =
+    implicit final def tryTFunctor[F[_]](implicit F0: Functor[F]): Functor[TryT[F, ?]] =
       new TryTFunctor[F] {
         implicit override def F: Functor[F] = F0
       }
