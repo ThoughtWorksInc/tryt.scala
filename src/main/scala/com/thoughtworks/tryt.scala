@@ -17,6 +17,7 @@ object tryt {
 
   }
   //TODO : @delegate
+  @inline
   private[tryt] val extractor: TryTExtractor = new TryTExtractor {
 
     type TryT[F[_], A] = F[Try[A]]
@@ -44,6 +45,7 @@ object tryt {
   }
 
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
+    @inline
     implicit final def tryTParallelApplicative[F[_]](
         implicit F0: Applicative[Lambda[x => F[x] @@ Parallel]],
         S0: Semigroup[Throwable]): Applicative[Lambda[x => TryT[F, x] @@ Parallel]] = {
@@ -55,6 +57,7 @@ object tryt {
   }
 
   private[tryt] sealed abstract class TryTInstances2 extends TryTInstances3 { this: TryT.type =>
+    @inline
     implicit final def tryTBindRec[F[_]](implicit F0: Monad[F], B0: BindRec[F]): BindRec[TryT[F, ?]] = {
       new TryTBindRec[F] {
         override implicit def B: BindRec[F] = B0
@@ -64,6 +67,7 @@ object tryt {
   }
 
   private[tryt] sealed abstract class TryTInstances1 extends TryTInstances2 { this: TryT.type =>
+    @inline
     implicit final def tryTMonadError[F[_]](implicit F0: Monad[F]): MonadError[TryT[F, ?], Throwable] = {
       new TryTMonadError[F] {
         implicit override def F: Monad[F] = F0
@@ -72,6 +76,7 @@ object tryt {
   }
 
   private[tryt] sealed abstract class TryTInstances0 extends TryTInstances1 { this: TryT.type =>
+    @inline
     implicit final def tryTFunctor[F[_]](implicit F0: Functor[F]): Functor[TryT[F, ?]] =
       new TryTFunctor[F] {
         implicit override def F: Functor[F] = F0
