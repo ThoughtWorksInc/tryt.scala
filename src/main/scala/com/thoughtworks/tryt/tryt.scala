@@ -1,14 +1,13 @@
 package com.thoughtworks
 
-import scalaz.std.TryInstances
-package tryt {
+import scala.language.higherKinds
+
+object tryt {
   import scala.util.control.{NoStackTrace, NonFatal}
   import scala.util.{Failure, Success, Try}
   import scalaz.{\/, _}
   import scala.language.higherKinds
   import scalaz.Tags.Parallel
-  import TryInstances.extractor
-  import TryInstances.extractor.unwrap
 
   private[tryt] trait TryTExtractor {
     type TryT[F[_], A]
@@ -18,8 +17,18 @@ package tryt {
 
     final def unapply[F[_], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
   }
+  //TODO : @delegate
+  private[tryt] val extractor: TryTExtractor = new TryTExtractor {
 
-  object TryInstances extends TryTInstances0 {
+    type TryT[F[_], A] = F[Try[A]]
+
+    override def apply[F[_], A](tryT: F[Try[A]]): TryT[F, A] = tryT
+
+    override def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = tryT
+
+  }
+
+  object TryT extends TryTInstances0 {
 
     /** An exception that contains multiple Throwables. */
     private[tryt] final case class MultipleException(throwableSet: Set[Throwable])
@@ -44,22 +53,11 @@ package tryt {
         }
     }
 
-    //TODO : @delegate
-    private[tryt] val extractor: TryTExtractor = new TryTExtractor {
-
-      type TryT[F[_], A] = F[Try[A]]
-
-      override def apply[F[_], A](tryT: F[Try[A]]): TryT[F, A] = tryT
-
-      override def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = tryT
-
-    }
-
     def unwrap[F[_], A](tryT: TryT[F, A]): F[Try[A]] = extractor.unwrap(tryT)
     def apply[F[_], A](tryT: F[Try[A]]): TryT[F, A] = extractor.apply(tryT)
   }
 
-  private[tryt] sealed abstract class TryTInstances3 {
+  private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
     implicit def tryTParallelApplicative[F[_]](
         implicit F0: Applicative[Lambda[x => F[x] @@ Parallel]]): Applicative[Lambda[x => TryT[F, x] @@ Parallel]] = {
       new TryTParallelApplicative[F] {
@@ -68,7 +66,7 @@ package tryt {
     }
   }
 
-  private[tryt] sealed abstract class TryTInstances2 extends TryTInstances3 {
+  private[tryt] sealed abstract class TryTInstances2 extends TryTInstances3 { this: TryT.type =>
     implicit def tryTBindRec[F[_]](implicit F0: Monad[F], B0: BindRec[F]): BindRec[TryT[F, ?]] = {
       new TryTBindRec[F] {
         override implicit def B: BindRec[F] = B0
@@ -77,7 +75,7 @@ package tryt {
     }
   }
 
-  private[tryt] sealed abstract class TryTInstances1 extends TryTInstances2 {
+  private[tryt] sealed abstract class TryTInstances1 extends TryTInstances2 { this: TryT.type =>
     implicit def tryTMonadError[F[_]](implicit F0: Monad[F]): MonadError[TryT[F, ?], Throwable] = {
       new TryTMonadError[F] {
         implicit override def F: Monad[F] = F0
@@ -85,12 +83,14 @@ package tryt {
     }
   }
 
-  private[tryt] sealed abstract class TryTInstances0 extends TryTInstances1 {
+  private[tryt] sealed abstract class TryTInstances0 extends TryTInstances1 { this: TryT.type =>
     implicit def tryTFunctor[F[_]](implicit F0: Functor[F]): Functor[TryT[F, ?]] =
       new TryTFunctor[F] {
         implicit override def F: Functor[F] = F0
       }
   }
+
+  import extractor._
 
   protected trait TryTFunctor[F[_]] extends Functor[TryT[F, ?]] {
     implicit protected def F: Functor[F]
@@ -213,10 +213,6 @@ package tryt {
       Parallel(extractor.apply(Parallel.unwrap(fTryBP)))
     }
   }
-}
 
-package object tryt {
-  import scala.language.higherKinds
-  val TryT = TryInstances
-  type TryT[F[_], A] = tryt.TryInstances.extractor.TryT[F, A]
+  type TryT[F[_], A] = extractor.TryT[F, A]
 }

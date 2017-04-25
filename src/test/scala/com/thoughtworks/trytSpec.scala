@@ -1,4 +1,4 @@
-package com.thoughtworks.tryt
+package com.thoughtworks
 import org.scalatest._
 
 import scalaz.std.AllInstances._
@@ -10,13 +10,19 @@ import scala.util.{Failure, Success, Try}
 import scalaz.concurrent.Future
 import scala.util.control.NonFatal
 import scalaz.Tags.Parallel
+import com.thoughtworks.tryt.TryT
 import com.thoughtworks.tryt.TryT._
 
-class TryTSpec extends AsyncFreeSpec with Matchers with Inside {
-
+object trytSpec {
   final case class Boom() extends Throwable
 
   final case class AnotherBoom() extends Throwable
+
+}
+
+final class trytSpec extends AsyncFreeSpec with Matchers with Inside {
+
+  import trytSpec._
 
   "Given a TryT transformed Future of Int" - {
     val futureTryInt: Future[Try[Int]] = Future.now(Try(3))
