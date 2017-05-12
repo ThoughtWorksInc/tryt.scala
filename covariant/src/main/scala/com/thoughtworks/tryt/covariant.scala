@@ -17,7 +17,7 @@ object covariant {
   }
   //TODO : @delegate
   @inline
-  private[tryt] val extractor: TryTExtractor = new TryTExtractor {
+  private[tryt] val TryTExtractor: TryTExtractor = new TryTExtractor {
 
     type TryT[F[+ _], +A] = F[Try[A]]
 
@@ -38,9 +38,9 @@ object covariant {
       override implicit def apply[G[+ _]: Monad]: Monad[TryT[G, ?]] = tryTMonadError
     }
 
-    private[thoughtworks] def unwrap[F[+ _], A](tryT: TryT[F, A]): F[Try[A]] = extractor.unwrap(tryT)
+    private[thoughtworks] def unwrap[F[+ _], A](tryT: TryT[F, A]): F[Try[A]] = TryTExtractor.unwrap(tryT)
     def unapply[F[+ _], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
-    def apply[F[+ _], A](tryT: F[Try[A]]): TryT[F, A] = extractor.apply(tryT)
+    def apply[F[+ _], A](tryT: F[Try[A]]): TryT[F, A] = TryTExtractor.apply(tryT)
   }
 
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
@@ -57,8 +57,10 @@ object covariant {
 
   private[tryt] sealed abstract class TryTInstances2 extends TryTInstances3 { this: TryT.type =>
     @inline
-    implicit final def tryTBindRec[F[+ _]](implicit F0: Monad[F], B0: BindRec[F]): BindRec[TryT[F, ?]] = {
-      new TryTBindRec[F] {
+    implicit final def tryTBindRec[F[+ _]](
+        implicit F0: Monad[F],
+        B0: BindRec[F]): BindRec[TryT[F, ?]] with MonadError[TryT[F, ?], Throwable] = {
+      new TryTBindRec[F] with TryTMonadError[F] {
         override implicit def B: BindRec[F] = B0
         override implicit def F: Monad[F] = F0
       }
@@ -82,13 +84,13 @@ object covariant {
       }
   }
 
-  import extractor._
+  import TryTExtractor._
 
   private[tryt] trait TryTFunctor[F[+ _]] extends Functor[TryT[F, ?]] {
     implicit protected def F: Functor[F]
 
     override def map[A, B](fa: TryT[F, A])(f: A => B): TryT[F, B] = {
-      extractor.apply(F.map(unwrap(fa)) { tryA =>
+      TryTExtractor.apply(F.map(unwrap(fa)) { tryA =>
         tryA.flatMap { a =>
           Try(f(a))
         }
@@ -99,7 +101,7 @@ object covariant {
   private[tryt] trait TryTBind[F[+ _]] extends Bind[TryT[F, ?]] with TryTFunctor[F] {
     implicit protected override def F: Monad[F]
 
-    override def bind[A, B](fa: TryT[F, A])(f: A => TryT[F, B]): TryT[F, B] = extractor {
+    override def bind[A, B](fa: TryT[F, A])(f: A => TryT[F, B]): TryT[F, B] = TryTExtractor {
       F.bind[Try[A], Try[B]](unwrap(fa)) {
         case Failure(e) => F.point(Failure(e))
         case Success(value) =>
@@ -108,7 +110,7 @@ object covariant {
               f(value)
             } catch {
               case NonFatal(e) =>
-                extractor.apply[F, B](F.point(Failure(e)))
+                TryTExtractor.apply[F, B](F.point(Failure(e)))
             }
           )
       }
@@ -124,7 +126,7 @@ object covariant {
       val fTryB: F[Try[B]] = B.tailrecM[A, Try[B]](a =>
         Try(f(a)) match {
           case Success(tryT) =>
-            F.map(extractor.unwrap(tryT)) {
+            F.map(TryTExtractor.unwrap(tryT)) {
               case Failure(e) =>
                 \/-(Failure(e))
               case Success(\/-(b)) =>
@@ -135,26 +137,25 @@ object covariant {
           case Failure(e) =>
             F.point(\/-(Failure(e)))
       })(a)
-
-      extractor(fTryB)
+      TryTExtractor(fTryB)
     }
   }
 
   private[tryt] trait TryTMonadError[F[+ _]] extends MonadError[TryT[F, ?], Throwable] with TryTBind[F] {
     implicit protected override def F: Monad[F]
 
-    override def point[A](a: => A): TryT[F, A] = extractor.apply(F.point(Try(a)))
+    override def point[A](a: => A): TryT[F, A] = TryTExtractor.apply(F.point(Try(a)))
 
-    override def raiseError[A](e: Throwable): TryT[F, A] = extractor.apply[F, A](F.point(Failure(e)))
+    override def raiseError[A](e: Throwable): TryT[F, A] = TryTExtractor.apply[F, A](F.point(Failure(e)))
 
-    override def handleError[A](fa: TryT[F, A])(f: (Throwable) => TryT[F, A]): TryT[F, A] = extractor {
+    override def handleError[A](fa: TryT[F, A])(f: (Throwable) => TryT[F, A]): TryT[F, A] = TryTExtractor {
       F.bind(unwrap(fa)) {
         case Failure(e) =>
           unwrap(
             try {
               f(e)
             } catch {
-              case NonFatal(nonFatal) => extractor[F, A](F.point(Failure(nonFatal)))
+              case NonFatal(nonFatal) => TryTExtractor[F, A](F.point(Failure(nonFatal)))
             }
           )
         case Success(value) => F.point(Success(value))
@@ -169,21 +170,21 @@ object covariant {
     private type P[A] = T[A] @@ Parallel
 
     override def point[A](a: => A): P[A] =
-      Parallel(extractor[F, A] {
+      Parallel(TryTExtractor[F, A] {
         Parallel.unwrap(F.point(Try(a)))
       })
 
     override def ap[A, B](fa: => P[A])(f: => P[(A) => B]): P[B] = {
 
       val fTryAP: F[Try[A]] @@ Parallel = try {
-        Parallel(extractor.unwrap(Parallel.unwrap(fa)))
+        Parallel(TryTExtractor.unwrap(Parallel.unwrap(fa)))
       } catch {
         case NonFatal(e) =>
           F.point(Failure(e))
       }
 
       val fTryABP: F[Try[A => B]] @@ Parallel = try {
-        Parallel(extractor.unwrap(Parallel.unwrap(f)): F[Try[A => B]])
+        Parallel(TryTExtractor.unwrap(Parallel.unwrap(f)): F[Try[A => B]])
       } catch {
         case NonFatal(e) =>
           F.point(Failure(e))
@@ -212,9 +213,10 @@ object covariant {
               }
           }
         }
-      Parallel(extractor.apply(Parallel.unwrap(fTryBP)))
+      Parallel(TryTExtractor.apply(Parallel.unwrap(fTryBP)))
     }
   }
 
-  type TryT[F[+ _], A] = extractor.TryT[F, A]
+  type TryT[F[+ _], A] = TryTExtractor.TryT[F, A]
+
 }
