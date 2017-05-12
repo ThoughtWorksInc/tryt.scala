@@ -13,7 +13,7 @@ lazy val commonSetting = Seq(
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 )
 
-val CovariantRegex = """covariant|\+\s*([A_])\b""".r
+val CovariantRegex = """extends TryTInstances0|covariant|\+\s*([A_])\b""".r
 
 lazy val invariant = crossProject
   .crossType(CrossType.Pure)
@@ -30,6 +30,7 @@ lazy val invariant = crossProject
             val covariantSource = IO.read(covariantFile, scala.io.Codec.UTF8.charSet)
 
             val doubleSource = CovariantRegex.replaceAllIn(covariantSource, (_: Match) match {
+              case Match("extends TryTInstances0") => "extends TryTInstances0 with InvariantInstances"
               case Match("covariant") => "invariant"
               case Groups(name @ ("A" | "_")) => name
             })

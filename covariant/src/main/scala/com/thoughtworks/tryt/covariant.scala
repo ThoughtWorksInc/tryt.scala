@@ -28,16 +28,6 @@ object covariant {
   }
 
   object TryT extends TryTInstances0 {
-
-    @inline
-    implicit final def tryTMonadTrans: MonadTrans[TryT] = new MonadTrans[TryT] {
-      override def liftM[G[+ _], A](a: G[A])(implicit monad: Monad[G]): TryT[G, A] = {
-        TryT(monad.map(a)(Success(_)))
-      }
-
-      override implicit def apply[G[+ _]: Monad]: Monad[TryT[G, ?]] = tryTMonadError
-    }
-
     private[thoughtworks] def unwrap[F[+ _], A](tryT: TryT[F, A]): F[Try[A]] = TryTExtractor.unwrap(tryT)
     def unapply[F[+ _], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
     def apply[F[+ _], A](tryT: F[Try[A]]): TryT[F, A] = TryTExtractor.apply(tryT)
@@ -46,10 +36,10 @@ object covariant {
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
     @inline
     implicit final def tryTParallelApplicative[F[+ _]](
-        implicit F0: Applicative[Lambda[`+A` => F[A] @@ Parallel]],
-        S0: Semigroup[Throwable]): Applicative[Lambda[`+A` => TryT[F, A] @@ Parallel]] = {
+        implicit F0: Applicative[Lambda[A => F[A] @@ Parallel]],
+        S0: Semigroup[Throwable]): Applicative[Lambda[A => TryT[F, A] @@ Parallel]] = {
       new TryTParallelApplicative[F] {
-        override implicit def F: Applicative[Lambda[`+A` => F[A] @@ Parallel]] = F0
+        override implicit def F: Applicative[Lambda[A => F[A] @@ Parallel]] = F0
         override implicit def S: Semigroup[Throwable] = S0
       }
     }
@@ -163,8 +153,8 @@ object covariant {
     }
   }
 
-  private[tryt] trait TryTParallelApplicative[F[+ _]] extends Applicative[Lambda[`+A` => TryT[F, A] @@ Parallel]] {
-    implicit protected def F: Applicative[Lambda[`+A` => F[A] @@ Parallel]]
+  private[tryt] trait TryTParallelApplicative[F[+ _]] extends Applicative[Lambda[A => TryT[F, A] @@ Parallel]] {
+    implicit protected def F: Applicative[Lambda[A => F[A] @@ Parallel]]
     implicit protected def S: Semigroup[Throwable]
     private type T[+A] = TryT[F, A]
     private type P[A] = T[A] @@ Parallel
@@ -217,6 +207,6 @@ object covariant {
     }
   }
 
-  type TryT[F[+ _], A] = TryTExtractor.TryT[F, A]
+  type TryT[F[+ _], +A] = TryTExtractor.TryT[F, A]
 
 }

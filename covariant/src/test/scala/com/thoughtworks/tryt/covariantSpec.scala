@@ -307,7 +307,7 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
   "TryTParallelApplicative point without exception" in {
 
     val tryTFutureInt: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point(1)
+      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point(1)
 
     val futureTryInt: Future[Try[Int]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
@@ -327,7 +327,7 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
   "TryTParallelApplicative point with exception" in {
 
     val tryTFutureInt: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point {
+      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point {
         throw Boom()
         1
       }
@@ -350,15 +350,15 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
   "TryTParallelApplicative ap without exception" in {
 
     def fa: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point(1)
+      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point(1)
 
     def f: TryT[Future, Int => String] @@ Parallel =
-      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point { int =>
+      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point { int =>
         "String"
       }
 
     val tryTFutureInt: TryT[Future, String] @@ Parallel =
-      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].ap(fa)(f)
+      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].ap(fa)(f)
 
     val futureTryInt: Future[Try[String]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
@@ -378,16 +378,16 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
   "TryTParallelApplicative ap with exception" in {
 
     def fa: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point(1)
+      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point(1)
 
     def f: TryT[Future, Int => String] @@ Parallel =
-      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point { int =>
+      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point { int =>
         throw Boom()
         "String"
       }
 
     val tryTFutureInt: TryT[Future, String] @@ Parallel =
-      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].ap(fa)(f)
+      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].ap(fa)(f)
 
     val futureTryInt: Future[Try[String]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
