@@ -57,3 +57,12 @@ lazy val covariantJS = covariant.js
 organization in ThisBuild := "com.thoughtworks.tryt"
 
 publishArtifact := false
+
+lazy val unidoc = project
+  .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
+  .settings(
+    UnidocKeys.unidocProjectFilter in ScalaUnidoc in UnidocKeys.unidoc := inProjects(invariantJVM, covariantJVM),
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    scalacOptions += "-Xexperimental"
+  )
