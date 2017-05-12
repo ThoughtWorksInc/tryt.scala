@@ -166,7 +166,7 @@ object covariant {
   private[tryt] trait TryTParallelApplicative[F[+ _]] extends Applicative[Lambda[`+A` => TryT[F, A] @@ Parallel]] {
     implicit protected def F: Applicative[Lambda[`+A` => F[A] @@ Parallel]]
     implicit protected def S: Semigroup[Throwable]
-    private type T[A] = TryT[F, A]
+    private type T[+A] = TryT[F, A]
     private type P[A] = T[A] @@ Parallel
 
     override def point[A](a: => A): P[A] =
