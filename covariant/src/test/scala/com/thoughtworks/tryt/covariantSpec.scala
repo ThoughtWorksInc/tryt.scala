@@ -1,19 +1,17 @@
-package com.thoughtworks
-import org.scalatest._
+package com.thoughtworks.tryt
 
-import scalaz.std.AllInstances._
-import scalaz._
+import com.thoughtworks.tryt.covariant.TryT
+import com.thoughtworks.tryt.covariant.TryT._
+import org.scalatest.{Assertion, AsyncFreeSpec, Inside, Matchers}
+
 import scala.concurrent.Promise
-import scalaz.concurrent.Future._
-import scala.language.higherKinds
-import scala.util.{Failure, Success, Try}
-import scalaz.concurrent.Future
 import scala.util.control.{NoStackTrace, NonFatal}
+import scala.util.{Failure, Success, Try}
 import scalaz.Tags.Parallel
-import com.thoughtworks.tryt.TryT
-import com.thoughtworks.tryt.TryT._
-
-object trytSpec {
+import scalaz.concurrent.Future
+import scalaz.concurrent.Future._
+import scalaz.{-\/, @@, Applicative, BindRec, Functor, MonadError, Semigroup, \/, \/-}
+object covariantSpec {
   final case class Boom() extends Throwable
 
   final case class AnotherBoom() extends Throwable
@@ -42,9 +40,12 @@ object trytSpec {
   }
 }
 
-final class trytSpec extends AsyncFreeSpec with Matchers with Inside {
+/**
+  * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
+  */
+final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
-  import trytSpec._
+  import covariantSpec._
 
   "Given a TryT transformed Future of Int" - {
     val futureTryInt: Future[Try[Int]] = Future.now(Try(3))
@@ -306,7 +307,7 @@ final class trytSpec extends AsyncFreeSpec with Matchers with Inside {
   "TryTParallelApplicative point without exception" in {
 
     val tryTFutureInt: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[x => TryT[Future, x] @@ Parallel]].point(1)
+      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point(1)
 
     val futureTryInt: Future[Try[Int]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
@@ -326,7 +327,7 @@ final class trytSpec extends AsyncFreeSpec with Matchers with Inside {
   "TryTParallelApplicative point with exception" in {
 
     val tryTFutureInt: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[x => TryT[Future, x] @@ Parallel]].point {
+      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point {
         throw Boom()
         1
       }
@@ -349,15 +350,15 @@ final class trytSpec extends AsyncFreeSpec with Matchers with Inside {
   "TryTParallelApplicative ap without exception" in {
 
     def fa: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[x => TryT[Future, x] @@ Parallel]].point(1)
+      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point(1)
 
     def f: TryT[Future, Int => String] @@ Parallel =
-      Applicative[Lambda[x => TryT[Future, x] @@ Parallel]].point { int =>
+      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point { int =>
         "String"
       }
 
     val tryTFutureInt: TryT[Future, String] @@ Parallel =
-      Applicative[Lambda[x => TryT[Future, x] @@ Parallel]].ap(fa)(f)
+      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].ap(fa)(f)
 
     val futureTryInt: Future[Try[String]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
@@ -377,16 +378,16 @@ final class trytSpec extends AsyncFreeSpec with Matchers with Inside {
   "TryTParallelApplicative ap with exception" in {
 
     def fa: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[x => TryT[Future, x] @@ Parallel]].point(1)
+      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point(1)
 
     def f: TryT[Future, Int => String] @@ Parallel =
-      Applicative[Lambda[x => TryT[Future, x] @@ Parallel]].point { int =>
+      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].point { int =>
         throw Boom()
         "String"
       }
 
     val tryTFutureInt: TryT[Future, String] @@ Parallel =
-      Applicative[Lambda[x => TryT[Future, x] @@ Parallel]].ap(fa)(f)
+      Applicative[Lambda[`+A` => TryT[Future, A] @@ Parallel]].ap(fa)(f)
 
     val futureTryInt: Future[Try[String]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
