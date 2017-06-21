@@ -10,7 +10,7 @@
 There are two monad transformers: the invariant `TryT` and covariant `TryT`.
 
 ### Covariant `TryT`
-Covariant `TryT` works monadic data types whose kind is `F[+A]`,
+Covariant `TryT` works with monadic data types whose kind is `F[+A]`,
 like `scalaz.concurrent.Future` or `scalaz.Name`.
 
 To use covariant `TryT`, add the following setting to your `build.sbt`,
@@ -22,7 +22,7 @@ libraryDependencies += "com.thoughtworks.tryt" %% "invariant" % "latest.release"
 and check the [Scaladoc](https://javadoc.io/page/com.thoughtworks.tryt/covariant_2.12/latest/com/thoughtworks/tryt/covariant$$TryT.html) for usage.
 
 ### invariant `TryT`
-Invariant `TryT` works all monadic data types
+Invariant `TryT` works with all monadic data types
 
 To use invariant `TryT`, add the following setting to your `build.sbt`,
 ``` scala
