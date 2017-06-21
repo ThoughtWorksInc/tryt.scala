@@ -6,18 +6,25 @@ import scala.util.{Failure, Success, Try}
 import scalaz.Tags.Parallel
 import scalaz.{\/, _}
 
+/** The namespace that contains the covariant [[TryT]].
+  *
+  * Usage:
+  * {{{
+  * import com.thoughtworks.tryt.covariant._
+  * }}}
+  */
 object covariant {
 
-  private[tryt] trait TryTExtractor {
+  private[tryt] trait OpacityTypes {
     type TryT[F[+ _], +A]
 
     def apply[F[+ _], A](run: F[Try[A]]): TryT[F, A]
     def unwrap[F[+ _], A](tryT: TryT[F, A]): F[Try[A]]
 
   }
-  //TODO : @delegate
+
   @inline
-  private[tryt] val TryTExtractor: TryTExtractor = new TryTExtractor {
+  private[tryt] val opacityTypes: OpacityTypes = new OpacityTypes {
 
     type TryT[F[+ _], +A] = F[Try[A]]
 
@@ -28,9 +35,9 @@ object covariant {
   }
 
   object TryT extends TryTInstances0 {
-    private[thoughtworks] def unwrap[F[+ _], A](tryT: TryT[F, A]): F[Try[A]] = TryTExtractor.unwrap(tryT)
+    private[thoughtworks] def unwrap[F[+ _], A](tryT: TryT[F, A]): F[Try[A]] = opacityTypes.unwrap(tryT)
     def unapply[F[+ _], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
-    def apply[F[+ _], A](tryT: F[Try[A]]): TryT[F, A] = TryTExtractor.apply(tryT)
+    def apply[F[+ _], A](tryT: F[Try[A]]): TryT[F, A] = opacityTypes.apply(tryT)
   }
 
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
@@ -74,13 +81,13 @@ object covariant {
       }
   }
 
-  import TryTExtractor._
+  import opacityTypes._
 
   private[tryt] trait TryTFunctor[F[+ _]] extends Functor[TryT[F, ?]] {
     implicit protected def F: Functor[F]
 
     override def map[A, B](fa: TryT[F, A])(f: A => B): TryT[F, B] = {
-      TryTExtractor.apply(F.map(unwrap(fa)) { tryA =>
+      opacityTypes.apply(F.map(unwrap(fa)) { tryA =>
         tryA.flatMap { a =>
           Try(f(a))
         }
@@ -91,7 +98,7 @@ object covariant {
   private[tryt] trait TryTBind[F[+ _]] extends Bind[TryT[F, ?]] with TryTFunctor[F] {
     implicit protected override def F: Monad[F]
 
-    override def bind[A, B](fa: TryT[F, A])(f: A => TryT[F, B]): TryT[F, B] = TryTExtractor {
+    override def bind[A, B](fa: TryT[F, A])(f: A => TryT[F, B]): TryT[F, B] = opacityTypes {
       F.bind[Try[A], Try[B]](unwrap(fa)) {
         case Failure(e) => F.point(Failure(e))
         case Success(value) =>
@@ -100,7 +107,7 @@ object covariant {
               f(value)
             } catch {
               case NonFatal(e) =>
-                TryTExtractor.apply[F, B](F.point(Failure(e)))
+                opacityTypes.apply[F, B](F.point(Failure(e)))
             }
           )
       }
@@ -116,7 +123,7 @@ object covariant {
       val fTryB: F[Try[B]] = B.tailrecM[A, Try[B]](a =>
         Try(f(a)) match {
           case Success(tryT) =>
-            F.map(TryTExtractor.unwrap(tryT)) {
+            F.map(opacityTypes.unwrap(tryT)) {
               case Failure(e) =>
                 \/-(Failure(e))
               case Success(\/-(b)) =>
@@ -127,25 +134,25 @@ object covariant {
           case Failure(e) =>
             F.point(\/-(Failure(e)))
       })(a)
-      TryTExtractor(fTryB)
+      opacityTypes(fTryB)
     }
   }
 
   private[tryt] trait TryTMonadError[F[+ _]] extends MonadError[TryT[F, ?], Throwable] with TryTBind[F] {
     implicit protected override def F: Monad[F]
 
-    override def point[A](a: => A): TryT[F, A] = TryTExtractor.apply(F.point(Try(a)))
+    override def point[A](a: => A): TryT[F, A] = opacityTypes.apply(F.point(Try(a)))
 
-    override def raiseError[A](e: Throwable): TryT[F, A] = TryTExtractor.apply[F, A](F.point(Failure(e)))
+    override def raiseError[A](e: Throwable): TryT[F, A] = opacityTypes.apply[F, A](F.point(Failure(e)))
 
-    override def handleError[A](fa: TryT[F, A])(f: (Throwable) => TryT[F, A]): TryT[F, A] = TryTExtractor {
+    override def handleError[A](fa: TryT[F, A])(f: (Throwable) => TryT[F, A]): TryT[F, A] = opacityTypes {
       F.bind(unwrap(fa)) {
         case Failure(e) =>
           unwrap(
             try {
               f(e)
             } catch {
-              case NonFatal(nonFatal) => TryTExtractor[F, A](F.point(Failure(nonFatal)))
+              case NonFatal(nonFatal) => opacityTypes[F, A](F.point(Failure(nonFatal)))
             }
           )
         case Success(value) => F.point(Success(value))
@@ -160,21 +167,21 @@ object covariant {
     private type P[A] = T[A] @@ Parallel
 
     override def point[A](a: => A): P[A] =
-      Parallel(TryTExtractor[F, A] {
+      Parallel(opacityTypes[F, A] {
         Parallel.unwrap(F.point(Try(a)))
       })
 
     override def ap[A, B](fa: => P[A])(f: => P[(A) => B]): P[B] = {
 
       val fTryAP: F[Try[A]] @@ Parallel = try {
-        Parallel(TryTExtractor.unwrap(Parallel.unwrap(fa)))
+        Parallel(opacityTypes.unwrap(Parallel.unwrap(fa)))
       } catch {
         case NonFatal(e) =>
           F.point(Failure(e))
       }
 
       val fTryABP: F[Try[A => B]] @@ Parallel = try {
-        Parallel(TryTExtractor.unwrap(Parallel.unwrap(f)): F[Try[A => B]])
+        Parallel(opacityTypes.unwrap(Parallel.unwrap(f)): F[Try[A => B]])
       } catch {
         case NonFatal(e) =>
           F.point(Failure(e))
@@ -203,10 +210,15 @@ object covariant {
               }
           }
         }
-      Parallel(TryTExtractor.apply(Parallel.unwrap(fTryBP)))
+      Parallel(opacityTypes.apply(Parallel.unwrap(fTryBP)))
     }
   }
 
-  type TryT[F[+ _], +A] = TryTExtractor.TryT[F, A]
+  /**
+    *
+    * @tparam F
+    * @tparam A
+    */
+  type TryT[F[+ _], +A] = opacityTypes.TryT[F, A]
 
 }
