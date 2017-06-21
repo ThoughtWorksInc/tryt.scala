@@ -6,13 +6,7 @@ import scala.util.{Failure, Success, Try}
 import scalaz.Tags.Parallel
 import scalaz.{\/, _}
 
-/** The namespace that contains the covariant [[TryT]].
-  *
-  * Usage:
-  * {{{
-  * import com.thoughtworks.tryt.covariant._
-  * }}}
-  */
+/** The namespace that contains the covariant [[TryT]]. */
 object covariant {
 
   private[tryt] trait OpacityTypes {
@@ -36,12 +30,17 @@ object covariant {
 
   object TryT extends TryTInstances0 {
     private[thoughtworks] def unwrap[F[+ _], A](tryT: TryT[F, A]): F[Try[A]] = opacityTypes.unwrap(tryT)
+
+    /** @group Converters */
     def unapply[F[+ _], A](tryT: TryT[F, A]): Some[F[Try[A]]] = Some(unwrap(tryT))
+
+    /** @group Converters */
     def apply[F[+ _], A](tryT: F[Try[A]]): TryT[F, A] = opacityTypes.apply(tryT)
   }
 
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
-    @inline
+
+    /** @group Type classes */
     implicit final def tryTParallelApplicative[F[+ _]](
         implicit F0: Applicative[Lambda[A => F[A] @@ Parallel]],
         S0: Semigroup[Throwable]): Applicative[Lambda[A => TryT[F, A] @@ Parallel]] = {
@@ -53,7 +52,8 @@ object covariant {
   }
 
   private[tryt] sealed abstract class TryTInstances2 extends TryTInstances3 { this: TryT.type =>
-    @inline
+
+    /** @group Type classes */
     implicit final def tryTBindRec[F[+ _]](
         implicit F0: Monad[F],
         B0: BindRec[F]): BindRec[TryT[F, ?]] with MonadError[TryT[F, ?], Throwable] = {
@@ -65,7 +65,8 @@ object covariant {
   }
 
   private[tryt] sealed abstract class TryTInstances1 extends TryTInstances2 { this: TryT.type =>
-    @inline
+
+    /** @group Type classes */
     implicit final def tryTMonadError[F[+ _]](implicit F0: Monad[F]): MonadError[TryT[F, ?], Throwable] = {
       new TryTMonadError[F] {
         implicit override def F: Monad[F] = F0
@@ -74,7 +75,8 @@ object covariant {
   }
 
   private[tryt] sealed abstract class TryTInstances0 extends TryTInstances1 { this: TryT.type =>
-    @inline
+
+    /** @group Type classes */
     implicit final def tryTFunctor[F[+ _]](implicit F0: Functor[F]): Functor[TryT[F, ?]] =
       new TryTFunctor[F] {
         implicit override def F: Functor[F] = F0
@@ -214,10 +216,78 @@ object covariant {
     }
   }
 
-  /**
+  /** A monad transformer for exception handling.
     *
-    * @tparam F
-    * @tparam A
+    * @see This `TryT` transfomer is similar to [[scalaz.EitherT]],
+    *      except `TryT` handles exceptions thrown in callback functions passed to
+    *      [[scalaz.Monad.map map]], [[scalaz.Monad.bind bind]] or [[scalaz.Monad.point point]].
+    *
+    * @example As a monad transformer, `TryT` should be used with another monadic data type, like [[scalaz.Name]].
+    *
+    *          {{{
+    *          import scalaz.Name
+    *          import com.thoughtworks.tryt.covariant.TryT, TryT._
+    *
+    *          type TryName[+A] = TryT[Name, A]
+    *          }}}
+    *
+    *          Given a `validate` function,
+    *
+    *          {{{
+    *          def validate(s: String): Int = s.toInt
+    *          }}}
+    *
+    *          when creating a `TryT`-transformed [[scalaz.Name]] from the `validate`,
+    *
+    *          {{{
+    *          import scalaz.syntax.all._
+    *          val invalidTry: TryName[Int] = validate("invalid input").point[TryName]
+    *          }}}
+    *
+    *          then the exceptions thrown in `validate` call should be converted to a [[scala.util.Failure]];
+    *
+    *          {{{
+    *          import com.thoughtworks.tryt.covariant.TryT._
+    *
+    *          val TryT(Name(failure)) = invalidTry
+    *
+    *          import scala.util._
+    *          failure should be(an[Failure[_]])
+    *          }}}
+    *
+    *          and when there is no exception thrown in `validate` call,
+    *
+    *          {{{
+    *          val validTry: TryName[Int] = validate("42").point[TryName]
+    *          }}}
+    *
+    *          then the result of `validate` call should be converted to a [[scala.util.Success]];
+    *
+    *          {{{
+    *          val TryT(Name(success)) = validTry
+    *          success should be(Success(42))
+    *          }}}
+    *
+    *          and when the `TryT`-transformed [[scalaz.Name]] is built from a `for`-comprehension,
+    *
+    *          {{{
+    *          val invalidForComprehension: TryName[Int] = for {
+    *            i <- validate("42").point[TryName]
+    *            j <- validate("invalid input").point[TryName]
+    *          } yield i + j
+    *          }}}
+    *
+    *          then the exceptions thrown in the `for`-comprehension should be converted to a [[scala.util.Failure]];
+    *
+    *          {{{
+    *          val TryT(Name(failure2)) = invalidTry
+    *          failure2 should be(an[Failure[_]])
+    *          }}}
+    *
+    *
+    * @note This `TryT` type is an opacity alias to `F[Try[A`.
+    *       All type classes and helper functions for this `TryT` type are defined in the companion object [[TryT$ TryT]]
+    * @template
     */
   type TryT[F[+ _], +A] = opacityTypes.TryT[F, A]
 

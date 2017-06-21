@@ -5,55 +5,46 @@ import scala.util.matching.Regex.{Groups, Match}
 
 crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.2")
 
-lazy val commonSetting = Seq(
-  libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.12",
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % Test,
-  libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.12" % Test,
-  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
-  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
-)
-
 val CovariantRegex = """extends TryTInstances0|covariant|\+\s*([A_])\b""".r
 
-lazy val invariant = crossProject
-  .crossType(CrossType.Pure)
-  .settings(
-    commonSetting,
-    for (configuration <- Seq(Compile, Test))
-      yield {
-        sourceGenerators in configuration += Def.task {
-          for {
-            covariantFile <- (unmanagedSources in configuration in covariantJVM).value
-            covariantDirectory <- (unmanagedSourceDirectories in configuration in covariantJVM).value
-            relativeFile <- covariantFile.relativeTo(covariantDirectory)
-          } yield {
-            val covariantSource = IO.read(covariantFile, scala.io.Codec.UTF8.charSet)
+def copySource(fromProject: Project) = {
+  for (configuration <- Seq(Compile, Test)) yield {
+    sourceGenerators in configuration += Def.task {
+      for {
+        covariantFile <- (unmanagedSources in configuration in fromProject).value
+        covariantDirectory <- (unmanagedSourceDirectories in configuration in fromProject).value
+        relativeFile <- covariantFile.relativeTo(covariantDirectory)
+      } yield {
+        val covariantSource = IO.read(covariantFile, scala.io.Codec.UTF8.charSet)
 
-            val doubleSource = CovariantRegex.replaceAllIn(covariantSource, (_: Match) match {
-              case Match("extends TryTInstances0") => "extends TryTInstances0 with InvariantInstances"
-              case Match("covariant") => "invariant"
-              case Groups(name @ ("A" | "_")) => name
-            })
-
-            val outputFile = (sourceManaged in configuration).value / relativeFile.getPath
-            IO.write(outputFile, doubleSource, scala.io.Codec.UTF8.charSet)
-            outputFile
+        val doubleSource = CovariantRegex.replaceAllIn(
+          covariantSource,
+          (_: Match) match {
+            case Match("extends TryTInstances0") => "extends TryTInstances0 with InvariantInstances"
+            case Match("covariant") => "invariant"
+            case Groups(name @ ("A" | "_")) => name
           }
-        }.taskValue
+        )
+
+        val outputFile = (sourceManaged in configuration).value / relativeFile.getPath
+        IO.write(outputFile, doubleSource, scala.io.Codec.UTF8.charSet)
+        outputFile
       }
-  )
+    }.taskValue
+  }
+}
 
-lazy val covariant = crossProject
-  .crossType(CrossType.Pure)
-  .settings(commonSetting)
+lazy val invariant = crossProject.crossType(CrossType.Pure)
 
-lazy val invariantJVM = invariant.jvm
+lazy val covariant = crossProject.crossType(CrossType.Pure)
 
-lazy val invariantJS = invariant.js
+lazy val invariantJVM = invariant.jvm.addSbtFiles(file("../build.sbt.shared")).settings(copySource(covariantJVM))
 
-lazy val covariantJVM = covariant.jvm
+lazy val invariantJS = invariant.js.addSbtFiles(file("../build.sbt.shared")).settings(copySource(covariantJS))
 
-lazy val covariantJS = covariant.js
+lazy val covariantJVM = covariant.jvm.addSbtFiles(file("../build.sbt.shared"))
+
+lazy val covariantJS = covariant.js.addSbtFiles(file("../build.sbt.shared"))
 
 organization in ThisBuild := "com.thoughtworks.tryt"
 
