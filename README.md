@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/ThoughtWorksInc/tryt.scala.svg?branch=master)](https://travis-ci.org/ThoughtWorksInc/tryt.scala)
 [![Latest version](https://index.scala-lang.org/thoughtworksinc/tryt.scala/covariant/latest.svg)](https://index.scala-lang.org/thoughtworksinc/tryt.scala/covariant)
 [![Latest version](https://index.scala-lang.org/thoughtworksinc/tryt.scala/invariant/latest.svg)](https://index.scala-lang.org/thoughtworksinc/tryt.scala/invariant)
-[![Scaladoc](https://javadoc.io/badge/com.thoughtworks.tryt/covariant_2.11.svg?label=scaladoc)](https://javadoc.io/page/com.thoughtworks.tryt/covariant_2.11/latest/com/thoughtworks/tryt/index.html)
+[![Scaladoc](https://javadoc.io/badge/com.thoughtworks.tryt/covariant_2.11.svg?label=scaladoc)](https://javadoc.io/page/com.thoughtworks.tryt/covariant_2.11/latest/com/thoughtworks/tryt/package.html)
 
 **tryt.scala** contains [Scalaz](http://scalaz.org/) monad transformers for exception handling.
 
