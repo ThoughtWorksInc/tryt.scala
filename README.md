@@ -17,7 +17,7 @@ like `scalaz.concurrent.Future` or `scalaz.Name`.
 To use covariant `TryT`, add the following setting to your `build.sbt`,
 
 ``` scala
-libraryDependencies += "com.thoughtworks.tryt" %% "invariant" % "latest.release"
+libraryDependencies += "com.thoughtworks.tryt" %% "covariant" % "latest.release"
 ```
 
 and check the [Scaladoc](https://javadoc.io/page/com.thoughtworks.tryt/covariant_2.11/latest/com/thoughtworks/tryt/covariant$$TryT.html) for usage.
