@@ -7,7 +7,8 @@
 
 **tryt.scala** contains [Scalaz](http://scalaz.org/) monad transformers for exception handling.
 
-There are two monad transformers: the invariant `TryT` and covariant `TryT`.
+There are two monad transformers: the invariant `TryT` and the covariant `TryT`.
+Unlike `scala.EitherT`'s, those `TryT` transformers handle both exceptions thrown by native Java or Scala methods and exceptions raised by `MonadError.raiseError`.
 
 ### Covariant `TryT`
 Covariant `TryT` works with monadic data types whose kind is `F[+A]`,
@@ -16,12 +17,12 @@ like `scalaz.concurrent.Future` or `scalaz.Name`.
 To use covariant `TryT`, add the following setting to your `build.sbt`,
 
 ``` scala
-libraryDependencies += "com.thoughtworks.tryt" %% "invariant" % "latest.release"
+libraryDependencies += "com.thoughtworks.tryt" %% "covariant" % "latest.release"
 ```
 
 and check the [Scaladoc](https://javadoc.io/page/com.thoughtworks.tryt/covariant_2.11/latest/com/thoughtworks/tryt/covariant$$TryT.html) for usage.
 
-### invariant `TryT`
+### Invariant `TryT`
 Invariant `TryT` works with all monadic data types
 
 To use invariant `TryT`, add the following setting to your `build.sbt`,
