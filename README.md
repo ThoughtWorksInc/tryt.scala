@@ -7,7 +7,7 @@
 
 **tryt.scala** contains [Scalaz](http://scalaz.org/) monad transformers for exception handling.
 
-There are two monad transformers: the invariant `TryT` and covariant `TryT`. 
+There are two monad transformers: the invariant `TryT` and the covariant `TryT`. 
 Unlike `scala.EitherT`, `TryT` handles native exceptions thrown by native Java or Scala methods.
 
 ### Covariant `TryT`
