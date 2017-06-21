@@ -22,7 +22,7 @@ libraryDependencies += "com.thoughtworks.tryt" %% "invariant" % "latest.release"
 
 and check the [Scaladoc](https://javadoc.io/page/com.thoughtworks.tryt/covariant_2.11/latest/com/thoughtworks/tryt/covariant$$TryT.html) for usage.
 
-### invariant `TryT`
+### Invariant `TryT`
 Invariant `TryT` works with all monadic data types
 
 To use invariant `TryT`, add the following setting to your `build.sbt`,
