@@ -285,7 +285,7 @@ object covariant {
     *          }}}
     *
     *
-    * @note This `TryT` type is an opacity alias to `F[Try[A`.
+    * @note This `TryT` type is an opacity alias to `F[Try[A]]`.
     *       All type classes and helper functions for this `TryT` type are defined in the companion object [[TryT$ TryT]]
     * @template
     */
