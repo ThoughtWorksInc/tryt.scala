@@ -1,6 +1,7 @@
-package com.thoughtworks.tryt
+package com.thoughtworks
 
-import com.thoughtworks.tryt.covariant.TryT
+import com.thoughtworks.tryt.covariant._
+import com.thoughtworks.tryt.covariant.TryT._
 import com.thoughtworks.tryt.covariant.TryT._
 import org.scalatest.{Assertion, AsyncFreeSpec, Inside, Matchers}
 
@@ -53,7 +54,7 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     "When map it to another Int" - {
 
       "And the mapping function works fine" - {
-        val result: TryT[Future, Int] = Functor[TryT[Future, ?]].map[Int, Int](parallelFutureInt) { int =>
+        val result: TryT[Future, Int] = Functor[TryT[Future, ?]](covariantTryTTypeClass).map[Int, Int](parallelFutureInt) { int =>
           int * int
         }
         val TryT(unwrap) = result
@@ -78,7 +79,7 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
           int * int
         }
 
-        val unwrap: Future[Try[Int]] = TryT.unwrap(result)
+        val TryT(unwrap: Future[Try[Int]]) = result
         "Then the exception should be found in a Failure in the result Future" in {
 
           val p = Promise[Assertion]

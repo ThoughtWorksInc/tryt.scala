@@ -1,8 +1,12 @@
 enablePlugins(Example)
 
+organization in generateExample := "com.thoughtworks"
+
 exampleSuperTypes += "_root_.org.scalatest.Inside"
 
 libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.13"
+
+libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.13" % Test
 
 libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.3" % Test
 
