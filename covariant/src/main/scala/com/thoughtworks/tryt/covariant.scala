@@ -174,7 +174,7 @@ object covariant {
       })
 
     override def map[A, B](fa: P[A])(f: (A) => B): P[B] = {
-      Parallel(opacityTypes.apply(Parallel.unwrap(F.map(Parallel(unwrap(Parallel.unwrap(fa)))) { tryA =>
+      Parallel(opacityTypes.apply(Parallel.unwrap(F.map(Parallel[F[Try[A]]](unwrap(Parallel.unwrap(fa)))) { tryA =>
         tryA.flatMap { a =>
           Try(f(a))
         }
