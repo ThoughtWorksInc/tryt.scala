@@ -173,6 +173,14 @@ object covariant {
         Parallel.unwrap(F.point(Try(a)))
       })
 
+    override def map[A, B](fa: P[A])(f: (A) => B): P[B] = {
+      Parallel(opacityTypes.apply(Parallel.unwrap(F.map(Parallel(unwrap(Parallel.unwrap(fa)))) { tryA =>
+        tryA.flatMap { a =>
+          Try(f(a))
+        }
+      })))
+    }
+
     override def ap[A, B](fa: => P[A])(f: => P[(A) => B]): P[B] = {
 
       val fTryAP: F[Try[A]] @@ Parallel = try {
