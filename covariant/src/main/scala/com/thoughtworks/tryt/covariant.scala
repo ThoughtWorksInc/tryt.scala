@@ -4,6 +4,7 @@ import scala.language.higherKinds
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 import scalaz.Tags.Parallel
+import scalaz.effect.{IO, LiftIO, MonadCatchIO, MonadIO}
 import scalaz.{\/, _}
 
 /** The namespace that contains the covariant [[TryT]]. */
@@ -36,9 +37,26 @@ object covariant {
 
     /** @group Converters */
     def apply[F[+ _], A](tryT: F[Try[A]]): TryT[F, A] = opacityTypes.apply(tryT)
+
+    /** @group Type classes */
+    implicit final def tryTMonadCatchIORec[F[+ _]](
+        implicit F0: MonadIO[F],
+        B0: BindRec[F]): MonadCatchIO[TryT[F, ?]] with BindRec[TryT[F, ?]] = {
+      new MonadCatchIO[TryT[F, ?]] with TryTBindRec[F] with TryTLiftIO[F] with TryTMonadError[F] {
+        override implicit def B: BindRec[F] = B0
+        override implicit def F: MonadIO[F] = F0
+      }
+    }
   }
 
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
+
+    /** @group Type classes */
+    implicit final def tryTMonadCatchIO[F[+ _]](implicit F0: MonadIO[F]): MonadCatchIO[TryT[F, ?]] = {
+      new MonadCatchIO[TryT[F, ?]] with TryTLiftIO[F] with TryTMonadError[F] {
+        override implicit def F: MonadIO[F] = F0
+      }
+    }
 
     /** @group Type classes */
     implicit final def tryTParallelApplicative[F[+ _]](
@@ -75,6 +93,12 @@ object covariant {
   }
 
   private[tryt] sealed abstract class TryTInstances0 extends TryTInstances1 { this: TryT.type =>
+
+    /** @group Type classes */
+    implicit final def tryTLiftIO[F[+ _]](implicit F0: LiftIO[F]): LiftIO[TryT[F, ?]] =
+      new TryTLiftIO[F] {
+        implicit override def F: LiftIO[F] = F0
+      }
 
     /** @group Type classes */
     implicit final def tryTFunctor[F[+ _]](implicit F0: Functor[F]): Functor[TryT[F, ?]] =
@@ -140,6 +164,15 @@ object covariant {
     }
   }
 
+  private[tryt] trait TryTLiftIO[F[+ _]] extends LiftIO[TryT[F, ?]] {
+    implicit protected def F: LiftIO[F]
+
+    override def liftIO[A](ioa: IO[A]): TryT[F, A] = {
+      opacityTypes.apply(F.liftIO(ioa.map(Try(_))))
+    }
+
+  }
+
   private[tryt] trait TryTMonadError[F[+ _]] extends MonadError[TryT[F, ?], Throwable] with TryTBind[F] {
     implicit protected override def F: Monad[F]
 
@@ -159,6 +192,10 @@ object covariant {
           )
         case Success(value) => F.point(Success(value))
       }
+    }
+
+    def except[A](fa: TryT[F, A])(handler: Throwable => TryT[F, A]): TryT[F, A] = {
+      handleError(fa)(handler)
     }
   }
 
