@@ -23,7 +23,7 @@ object covariantSpec {
     override def toString: String = throwableSet.toString()
   }
 
-  implicit def throwableSemigroup = new Semigroup[Throwable] {
+  implicit def throwableSemigroup = new Serializable with Semigroup[Throwable] {
     override def append(f1: Throwable, f2: => Throwable): Throwable =
       f1 match {
         case MultipleException(exceptionSet1) =>

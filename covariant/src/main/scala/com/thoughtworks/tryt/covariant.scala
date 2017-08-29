@@ -19,7 +19,7 @@ object covariant {
   }
 
   @inline
-  private[tryt] val opacityTypes: OpacityTypes = new OpacityTypes {
+  private[tryt] val opacityTypes: OpacityTypes = new Serializable with OpacityTypes {
 
     type TryT[F[+ _], +A] = F[Try[A]]
 
@@ -42,7 +42,7 @@ object covariant {
     implicit final def tryTMonadCatchIORec[F[+ _]](
         implicit F0: MonadIO[F],
         B0: BindRec[F]): MonadCatchIO[TryT[F, ?]] with BindRec[TryT[F, ?]] = {
-      new MonadCatchIO[TryT[F, ?]] with TryTBindRec[F] with TryTLiftIO[F] with TryTMonadError[F] {
+      new Serializable with MonadCatchIO[TryT[F, ?]] with TryTBindRec[F] with TryTLiftIO[F] with TryTMonadError[F]  {
         override implicit def B: BindRec[F] = B0
         override implicit def F: MonadIO[F] = F0
       }
@@ -53,7 +53,7 @@ object covariant {
 
     /** @group Type classes */
     implicit final def tryTMonadCatchIO[F[+ _]](implicit F0: MonadIO[F]): MonadCatchIO[TryT[F, ?]] = {
-      new MonadCatchIO[TryT[F, ?]] with TryTLiftIO[F] with TryTMonadError[F] {
+      new Serializable with MonadCatchIO[TryT[F, ?]] with TryTLiftIO[F] with TryTMonadError[F] {
         override implicit def F: MonadIO[F] = F0
       }
     }
@@ -62,7 +62,7 @@ object covariant {
     implicit final def tryTParallelApplicative[F[+ _]](
         implicit F0: Applicative[Lambda[A => F[A] @@ Parallel]],
         S0: Semigroup[Throwable]): Applicative[Lambda[A => TryT[F, A] @@ Parallel]] = {
-      new TryTParallelApplicative[F] {
+      new Serializable with TryTParallelApplicative[F]  {
         override implicit def F: Applicative[Lambda[A => F[A] @@ Parallel]] = F0
         override implicit def S: Semigroup[Throwable] = S0
       }
@@ -75,7 +75,7 @@ object covariant {
     implicit final def tryTBindRec[F[+ _]](
         implicit F0: Monad[F],
         B0: BindRec[F]): BindRec[TryT[F, ?]] with MonadError[TryT[F, ?], Throwable] = {
-      new TryTBindRec[F] with TryTMonadError[F] {
+      new Serializable with TryTBindRec[F] with TryTMonadError[F]  {
         override implicit def B: BindRec[F] = B0
         override implicit def F: Monad[F] = F0
       }
@@ -86,7 +86,7 @@ object covariant {
 
     /** @group Type classes */
     implicit final def tryTMonadError[F[+ _]](implicit F0: Monad[F]): MonadError[TryT[F, ?], Throwable] = {
-      new TryTMonadError[F] {
+      new Serializable with TryTMonadError[F]  {
         implicit override def F: Monad[F] = F0
       }
     }
@@ -96,13 +96,13 @@ object covariant {
 
     /** @group Type classes */
     implicit final def tryTLiftIO[F[+ _]](implicit F0: LiftIO[F]): LiftIO[TryT[F, ?]] =
-      new TryTLiftIO[F] {
+      new Serializable with TryTLiftIO[F]  {
         implicit override def F: LiftIO[F] = F0
       }
 
     /** @group Type classes */
     implicit final def tryTFunctor[F[+ _]](implicit F0: Functor[F]): Functor[TryT[F, ?]] =
-      new TryTFunctor[F] {
+      new Serializable with TryTFunctor[F] {
         implicit override def F: Functor[F] = F0
       }
   }
