@@ -1,9 +1,6 @@
-import sbt.Keys.libraryDependencies
-import sbt.addCompilerPlugin
-
 import scala.util.matching.Regex.{Groups, Match}
 
-crossScalaVersions := Seq("2.10.6", "2.11.11", "2.12.2")
+crossScalaVersions in ThisBuild := Seq("2.10.7", "2.11.12", "2.12.6", "2.13.0-M4")
 
 val CovariantRegex = """extends TryTInstances0|covariant|\+\s*([A_])\b""".r
 
@@ -38,13 +35,13 @@ lazy val invariant = crossProject.crossType(CrossType.Pure)
 
 lazy val covariant = crossProject.crossType(CrossType.Pure)
 
-lazy val invariantJVM = invariant.jvm.addSbtFiles(file("../build.sbt.shared")).settings(copySource(covariantJVM))
+lazy val invariantJVM = invariant.jvm.settings(copySource(covariantJVM))
 
-lazy val invariantJS = invariant.js.addSbtFiles(file("../build.sbt.shared")).settings(copySource(covariantJS))
+lazy val invariantJS = invariant.js.settings(copySource(covariantJS))
 
-lazy val covariantJVM = covariant.jvm.addSbtFiles(file("../build.sbt.shared"))
+lazy val covariantJVM = covariant.jvm
 
-lazy val covariantJS = covariant.js.addSbtFiles(file("../build.sbt.shared"))
+lazy val covariantJS = covariant.js
 
 organization in ThisBuild := "com.thoughtworks.tryt"
 
@@ -53,8 +50,7 @@ publishArtifact := false
 lazy val unidoc = project
   .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
   .settings(
-    UnidocKeys.unidocProjectFilter in ScalaUnidoc in UnidocKeys.unidoc := inProjects(invariantJVM, covariantJVM),
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
-    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := inProjects(invariantJVM, covariantJVM),
+    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
     scalacOptions += "-Xexperimental"
   )
