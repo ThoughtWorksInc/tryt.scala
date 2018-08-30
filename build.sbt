@@ -48,6 +48,7 @@ publishArtifact := false
 lazy val unidoc = project
   .enablePlugins(ScalaUnidocPlugin)
   .settings(
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.1"),
+    unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := inProjects(invariantJVM, covariantJVM),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     scalacOptions += "-Xexperimental"
   )
