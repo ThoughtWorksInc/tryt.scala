@@ -7,7 +7,7 @@ libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.25"
 
 libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.25"
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP1" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP2" % Test
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 
