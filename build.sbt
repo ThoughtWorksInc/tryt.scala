@@ -1,6 +1,6 @@
 import scala.util.matching.Regex.{Groups, Match}
 
-crossScalaVersions in ThisBuild := Seq("2.10.7", "2.11.12", "2.12.6", "2.13.0-M4")
+crossScalaVersions in ThisBuild := Seq("2.10.7", "2.11.12", "2.12.6", "2.13.0-RC2")
 
 val CovariantRegex = """extends TryTInstances0|covariant|\+\s*([A_])\b""".r
 
@@ -48,9 +48,8 @@ organization in ThisBuild := "com.thoughtworks.tryt"
 publishArtifact := false
 
 lazy val unidoc = project
-  .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
+  .enablePlugins(ScalaUnidocPlugin)
   .settings(
-    unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := inProjects(invariantJVM, covariantJVM),
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.1"),
     scalacOptions += "-Xexperimental"
   )
