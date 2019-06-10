@@ -7,9 +7,9 @@ libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.27"
 
 libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.27"
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.0-SNAP11" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
 
-addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.1")
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
 sourceGenerators in Test := {
   (sourceGenerators in Test).value.filterNot { sourceGenerator =>

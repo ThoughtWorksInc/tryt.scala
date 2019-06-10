@@ -1,7 +1,5 @@
 import scala.util.matching.Regex.{Groups, Match}
 
-crossScalaVersions in ThisBuild := Seq("2.10.7", "2.11.12", "2.12.6", "2.13.0-RC2")
-
 val CovariantRegex = """extends TryTInstances0|covariant|\+\s*([A_])\b""".r
 
 def copySource(fromProject: Project) = {
@@ -45,11 +43,12 @@ lazy val covariantJS = covariant.js
 
 organization in ThisBuild := "com.thoughtworks.tryt"
 
-publishArtifact := false
+publish / skip := false
 
-lazy val unidoc = project
-  .enablePlugins(ScalaUnidocPlugin)
-  .settings(
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.1"),
-    scalacOptions += "-Xexperimental"
-  )
+enablePlugins(ScalaUnidocPlugin)
+
+unidocProjectFilter in ScalaUnidoc in unidoc := inProjects(invariantJVM, covariantJVM)
+
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+
+scalacOptions += "-Xexperimental"
