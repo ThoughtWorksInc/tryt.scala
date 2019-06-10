@@ -43,12 +43,12 @@ lazy val covariantJS = covariant.js
 
 organization in ThisBuild := "com.thoughtworks.tryt"
 
-publishArtifact := false
+publish / skip := false
 
-lazy val unidoc = project
-  .enablePlugins(ScalaUnidocPlugin)
-  .settings(
-    unidocProjectFilter in ScalaUnidoc in BaseUnidocPlugin.autoImport.unidoc := inProjects(invariantJVM, covariantJVM),
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
-    scalacOptions += "-Xexperimental"
-  )
+enablePlugins(ScalaUnidocPlugin)
+
+unidocProjectFilter in ScalaUnidoc in unidoc := inProjects(invariantJVM, covariantJVM)
+
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+
+scalacOptions += "-Xexperimental"
