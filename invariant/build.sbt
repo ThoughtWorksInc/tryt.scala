@@ -3,13 +3,13 @@ enablePlugins(Example)
 import scala.meta._
 exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
 
-libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.29"
+libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.30"
 
-libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.29"
+libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.30"
 
 libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
 
-libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.29" % Test
+libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.30" % Test
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
