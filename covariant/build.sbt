@@ -7,7 +7,7 @@ libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.29"
 
 libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.29"
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.1.2" % Test
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
 
