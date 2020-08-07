@@ -7,7 +7,7 @@ libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.29"
 
 libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.29"
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.1" % Test
 
 libraryDependencies += "org.scalaz" %% "scalaz-concurrent" % "7.2.29" % Test
 
