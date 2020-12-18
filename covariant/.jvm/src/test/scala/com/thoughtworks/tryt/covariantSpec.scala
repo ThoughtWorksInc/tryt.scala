@@ -2,7 +2,7 @@ package com.thoughtworks.tryt
 
 import com.thoughtworks.tryt.covariant.TryT
 import com.thoughtworks.tryt.covariant.TryT._
-import org.scalatest.{Assertion, AsyncFreeSpec, Inside, Matchers}
+import org.scalatest.{Assertion, Inside}
 
 import scala.concurrent.Promise
 import scala.util.control.{NoStackTrace, NonFatal}
@@ -11,6 +11,8 @@ import scalaz.Tags.Parallel
 import scalaz.concurrent.Future
 import scalaz.concurrent.Future._
 import scalaz.{-\/, @@, Applicative, BindRec, Functor, MonadError, Semigroup, \/, \/-}
+import org.scalatest.freespec.AsyncFreeSpec
+import org.scalatest.matchers.should.Matchers
 object covariantSpec {
   final case class Boom() extends Throwable
 
