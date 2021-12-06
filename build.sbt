@@ -16,8 +16,8 @@ def copySource(fromProject: Project) = {
           covariantSource,
           (_: Match) match {
             case Match("extends TryTInstances0") => "extends TryTInstances0 with InvariantInstances"
-            case Match("covariant") => "invariant"
-            case Groups(name @ ("A" | "_")) => name
+            case Match("covariant")              => "invariant"
+            case Groups(name @ ("A" | "_"))      => name
           }
         )
 
@@ -29,17 +29,12 @@ def copySource(fromProject: Project) = {
   }
 }
 
-lazy val invariant = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
+lazy val covariant = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure).build()
 
-lazy val covariant = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
-
-lazy val invariantJVM = invariant.jvm.settings(copySource(covariantJVM))
-
-lazy val invariantJS = invariant.js.settings(copySource(covariantJS))
-
-lazy val covariantJVM = covariant.jvm
-
-lazy val covariantJS = covariant.js
+lazy val invariant = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .jvmSettings(copySource(covariant.jvm))
+  .jsSettings(copySource(covariant.js))
 
 organization in ThisBuild := "com.thoughtworks.tryt"
 
@@ -47,7 +42,7 @@ publish / skip := false
 
 enablePlugins(ScalaUnidocPlugin)
 
-unidocProjectFilter in ScalaUnidoc in unidoc := inProjects(invariantJVM, covariantJVM)
+unidocProjectFilter in ScalaUnidoc in unidoc := inProjects(invariant.jvm, covariant.jvm)
 
 libraryDependencies ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
@@ -58,7 +53,7 @@ libraryDependencies ++= {
 
 ThisBuild / scalacOptions ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((3, _)) => Seq("-Ykind-projector:underscores")
+    case Some((3, _))                  => Seq("-Ykind-projector:underscores")
     case Some((2, 13)) | Some((2, 12)) => Seq("-Xsource:3", "-P:kind-projector:underscore-placeholders")
   }
 }
