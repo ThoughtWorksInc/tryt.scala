@@ -28,19 +28,19 @@ object covariantSpec {
         case MultipleException(exceptionSet1) =>
           f2 match {
             case MultipleException(exceptionSet2) => MultipleException(exceptionSet1 ++ exceptionSet2)
-            case _: Throwable => MultipleException(exceptionSet1 + f2)
+            case _: Throwable                     => MultipleException(exceptionSet1 + f2)
           }
         case _: Throwable =>
           f2 match {
             case MultipleException(exceptionSet2) => MultipleException(exceptionSet2 + f1)
-            case _: Throwable => MultipleException(Set(f1, f2))
+            case _: Throwable                     => MultipleException(Set(f1, f2))
           }
       }
   }
 }
 
-/**
-  * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
+/** @author
+  *   杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
@@ -60,11 +60,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
           val p = Promise[Assertion]
 
           unwrap.unsafePerformAsync { tryInt =>
-            inside(tryInt) {
-              case Success(value) =>
-                p.success {
-                  value should be(9)
-                }
+            inside(tryInt) { case Success(value) =>
+              p.success {
+                value should be(9)
+              }
             }
           }
           p.future
@@ -83,11 +82,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
           val p = Promise[Assertion]
 
           unwrap.unsafePerformAsync { tryInt =>
-            inside(tryInt) {
-              case Failure(e) =>
-                p.success {
-                  e should be(a[Boom])
-                }
+            inside(tryInt) { case Failure(e) =>
+              p.success {
+                e should be(a[Boom])
+              }
             }
           }
           p.future
@@ -105,11 +103,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Success(value) =>
-          p.success {
-            value should be(1)
-          }
+      inside(tryInt) { case Success(value) =>
+        p.success {
+          value should be(1)
+        }
       }
     }
     p.future
@@ -126,11 +123,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Failure(e) =>
-          p.success {
-            e should be(a[Boom])
-          }
+      inside(tryInt) { case Failure(e) =>
+        p.success {
+          e should be(a[Boom])
+        }
       }
     }
     p.future
@@ -144,11 +140,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Failure(e) =>
-          p.success {
-            e should be(a[Boom])
-          }
+      inside(tryInt) { case Failure(e) =>
+        p.success {
+          e should be(a[Boom])
+        }
       }
     }
     p.future
@@ -167,11 +162,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Success(value) =>
-          p.success {
-            value should be(1)
-          }
+      inside(tryInt) { case Success(value) =>
+        p.success {
+          value should be(1)
+        }
       }
     }
     p.future
@@ -191,11 +185,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Failure(e) =>
-          p.success {
-            e should be(a[Boom])
-          }
+      inside(tryInt) { case Failure(e) =>
+        p.success {
+          e should be(a[Boom])
+        }
       }
     }
     p.future
@@ -221,7 +214,9 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
         ContUnit.now(
           Failure[Int \/ Int](
             Boom()
-          )))
+          )
+        )
+      )
     }(0)
 
     val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
@@ -229,11 +224,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Failure(e) =>
-          p.success {
-            e should be(a[Boom])
-          }
+      inside(tryInt) { case Failure(e) =>
+        p.success {
+          e should be(a[Boom])
+        }
       }
     }
     p.future
@@ -244,13 +238,16 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val tryTFutureInt: TryT[ContUnit, Int] = BindRec[TryT[ContUnit, ?]].tailrecM { a: Int =>
       throw AnotherBoom()
       TryT(
-        ContUnit.now(Try[Int \/ Int](
-          try {
-            \/-(a)
-          } catch {
-            case NonFatal(_) => -\/(1)
-          }
-        )))
+        ContUnit.now(
+          Try[Int \/ Int](
+            try {
+              \/-(a)
+            } catch {
+              case NonFatal(_) => -\/(1)
+            }
+          )
+        )
+      )
     }(0)
 
     val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
@@ -258,11 +255,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Failure(e) =>
-          p.success {
-            e should be(a[AnotherBoom])
-          }
+      inside(tryInt) { case Failure(e) =>
+        p.success {
+          e should be(a[AnotherBoom])
+        }
       }
     }
     p.future
@@ -274,18 +270,21 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
     val tryTFutureInt: TryT[ContUnit, Int] = BindRec[TryT[ContUnit, ?]].tailrecM { a: Int =>
       TryT(
-        ContUnit.now(Try[Int \/ Int](
-          try {
-            if (flag < 10000) {
-              flag += 1
-              -\/(a)
-            } else {
-              \/-(flag)
+        ContUnit.now(
+          Try[Int \/ Int](
+            try {
+              if (flag < 10000) {
+                flag += 1
+                -\/(a)
+              } else {
+                \/-(flag)
+              }
+            } catch {
+              case NonFatal(_) => -\/(1)
             }
-          } catch {
-            case NonFatal(_) => -\/(1)
-          }
-        )))
+          )
+        )
+      )
     }(0)
 
     val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
@@ -293,11 +292,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Success(value) =>
-          p.success {
-            value should be(10000)
-          }
+      inside(tryInt) { case Success(value) =>
+        p.success {
+          value should be(10000)
+        }
       }
     }
     p.future
@@ -313,11 +311,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Success(value) =>
-          p.success {
-            value should be(1)
-          }
+      inside(tryInt) { case Success(value) =>
+        p.success {
+          value should be(1)
+        }
       }
     }
     p.future
@@ -336,11 +333,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Failure(e) =>
-          p.success {
-            e should be(a[Boom])
-          }
+      inside(tryInt) { case Failure(e) =>
+        p.success {
+          e should be(a[Boom])
+        }
       }
     }
     p.future
@@ -364,11 +360,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Success(value) =>
-          p.success {
-            value should be("String")
-          }
+      inside(tryInt) { case Success(value) =>
+        p.success {
+          value should be("String")
+        }
       }
     }
     p.future
@@ -393,11 +388,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     val p = Promise[Assertion]
 
     futureTryInt.unsafePerformAsync { tryInt =>
-      inside(tryInt) {
-        case Failure(e) =>
-          p.success {
-            e should be(a[Boom])
-          }
+      inside(tryInt) { case Failure(e) =>
+        p.success {
+          e should be(a[Boom])
+        }
       }
     }
     p.future
