@@ -1,7 +1,7 @@
 enablePlugins(Example)
 
 import scala.meta._
-exampleSuperTypes += ctor"_root_.org.scalatest.Inside"
+exampleSuperTypes += init"_root_.org.scalatest.Inside"
 
 libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.4.0-M9"
 
