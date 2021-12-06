@@ -1,3 +1,7 @@
 target/
 local.sbt
 secret/
+.metals/
+.bloop/
+metals.sbt
+.bsp/sbt.json
