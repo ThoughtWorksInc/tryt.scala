@@ -8,10 +8,9 @@ import scala.concurrent.Promise
 import scala.util.control.{NoStackTrace, NonFatal}
 import scala.util.{Failure, Success, Try}
 import scalaz.Tags.Parallel
-import scalaz.concurrent.Future
-import scalaz.concurrent.Future._
 import scalaz.{-\/, @@, Applicative, BindRec, Functor, MonadError, Semigroup, \/, \/-}
 object covariantSpec {
+  type ContUnit[+A] = scalaz.Cont[Unit, A]
   final case class Boom() extends Throwable
 
   final case class AnotherBoom() extends Throwable
@@ -47,13 +46,13 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
   import covariantSpec._
 
-  "Given a TryT transformed Future of Int" - {
-    val futureTryInt: Future[Try[Int]] = Future.now(Try(3))
-    val parallelFutureInt: TryT[Future, Int] = TryT(futureTryInt)
+  "Given a TryT transformed ContUnit of Int" - {
+    val futureTryInt: ContUnit[Try[Int]] = ContUnit.now(Try(3))
+    val parallelFutureInt: TryT[ContUnit, Int] = TryT(futureTryInt)
     "When map it to another Int" - {
 
       "And the mapping function works fine" - {
-        val result: TryT[Future, Int] = Functor[TryT[Future, ?]].map[Int, Int](parallelFutureInt) { int =>
+        val result: TryT[ContUnit, Int] = Functor[TryT[ContUnit, ?]].map[Int, Int](parallelFutureInt) { int =>
           int * int
         }
         val TryT(unwrap) = result
@@ -73,13 +72,13 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
       }
 
       "And the mapping function throws an exception" - {
-        val result: TryT[Future, Int] = Functor[TryT[Future, ?]].map[Int, Int](parallelFutureInt) { int =>
+        val result: TryT[ContUnit, Int] = Functor[TryT[ContUnit, ?]].map[Int, Int](parallelFutureInt) { int =>
           throw Boom()
           int * int
         }
 
-        val unwrap: Future[Try[Int]] = TryT.unwrap(result)
-        "Then the exception should be found in a Failure in the result Future" in {
+        val unwrap: ContUnit[Try[Int]] = TryT.unwrap(result)
+        "Then the exception should be found in a Failure in the result ContUnit" in {
 
           val p = Promise[Assertion]
 
@@ -98,10 +97,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
   }
 
   "TryTMonadError point without exception" in {
-    val tryTFutureInt: TryT[Future, Int] =
-      MonadError[TryT[Future, ?], Throwable].point(1)
+    val tryTFutureInt: TryT[ContUnit, Int] =
+      MonadError[TryT[ContUnit, ?], Throwable].point(1)
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(tryTFutureInt)
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
 
     val p = Promise[Assertion]
 
@@ -117,12 +116,12 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
   }
 
   "TryTMonadError point with exception" in {
-    val tryTFutureInt: TryT[Future, Int] = MonadError[TryT[Future, ?], Throwable].point {
+    val tryTFutureInt: TryT[ContUnit, Int] = MonadError[TryT[ContUnit, ?], Throwable].point {
       throw Boom()
       1
     }
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(tryTFutureInt)
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
 
     val p = Promise[Assertion]
 
@@ -138,9 +137,9 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
   }
 
   "TryTMonadError raiseError" in {
-    val tryTFutureInt: TryT[Future, Int] = MonadError[TryT[Future, ?], Throwable].raiseError(Boom())
+    val tryTFutureInt: TryT[ContUnit, Int] = MonadError[TryT[ContUnit, ?], Throwable].raiseError(Boom())
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(tryTFutureInt)
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
 
     val p = Promise[Assertion]
 
@@ -157,13 +156,13 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
   "TryTMonadError handleError" in {
 
-    val error: TryT[Future, Int] = MonadError[TryT[Future, ?], Throwable].raiseError(Boom())
+    val error: TryT[ContUnit, Int] = MonadError[TryT[ContUnit, ?], Throwable].raiseError(Boom())
 
-    val tryTFutureInt: TryT[Future, Int] = MonadError[TryT[Future, ?], Throwable].handleError(error) { throwable =>
-      MonadError[TryT[Future, ?], Throwable].point(1)
+    val tryTFutureInt: TryT[ContUnit, Int] = MonadError[TryT[ContUnit, ?], Throwable].handleError(error) { throwable =>
+      MonadError[TryT[ContUnit, ?], Throwable].point(1)
     }
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(tryTFutureInt)
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
 
     val p = Promise[Assertion]
 
@@ -180,14 +179,14 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
   "TryTMonadError handleError -- when handler throw exception" in {
 
-    val error: TryT[Future, Int] = MonadError[TryT[Future, ?], Throwable].raiseError(Boom())
+    val error: TryT[ContUnit, Int] = MonadError[TryT[ContUnit, ?], Throwable].raiseError(Boom())
 
-    val tryTFutureInt: TryT[Future, Int] = MonadError[TryT[Future, ?], Throwable].handleError(error) { throwable =>
+    val tryTFutureInt: TryT[ContUnit, Int] = MonadError[TryT[ContUnit, ?], Throwable].handleError(error) { throwable =>
       throw throwable
-      MonadError[TryT[Future, ?], Throwable].point(1)
+      MonadError[TryT[ContUnit, ?], Throwable].point(1)
     }
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(tryTFutureInt)
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
 
     val p = Promise[Assertion]
 
@@ -202,30 +201,30 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
     p.future
   }
 
-  implicit object FutureBindRec extends BindRec[Future] {
-    override def tailrecM[A, B](f: (A) => Future[\/[A, B]])(a: A): Future[B] = {
+  implicit object FutureBindRec extends BindRec[ContUnit] {
+    override def tailrecM[A, B](f: (A) => ContUnit[\/[A, B]])(a: A): ContUnit[B] = {
       f(a).flatMap {
-        case \/-(b) => Future.futureInstance.point(b)
+        case \/-(b) => ContUnit.futureInstance.point(b)
         case -\/(a) => tailrecM(f)(a)
       }
     }
 
-    override def bind[A, B](fa: Future[A])(f: (A) => Future[B]): Future[B] = Future.futureInstance.bind(fa)(f)
+    override def bind[A, B](fa: ContUnit[A])(f: (A) => ContUnit[B]): ContUnit[B] = ContUnit.futureInstance.bind(fa)(f)
 
-    override def map[A, B](fa: Future[A])(f: (A) => B): Future[B] = Future.futureInstance.map(fa)(f)
+    override def map[A, B](fa: ContUnit[A])(f: (A) => B): ContUnit[B] = ContUnit.futureInstance.map(fa)(f)
   }
 
   "TryTBindRec with failure" in {
 
-    val tryTFutureInt: TryT[Future, Int] = BindRec[TryT[Future, ?]].tailrecM { a: Int =>
-      TryT[Future, Int \/ Int](
-        Future.now(
+    val tryTFutureInt: TryT[ContUnit, Int] = BindRec[TryT[ContUnit, ?]].tailrecM { a: Int =>
+      TryT[ContUnit, Int \/ Int](
+        ContUnit.now(
           Failure[Int \/ Int](
             Boom()
           )))
     }(0)
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(tryTFutureInt)
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
 
     val p = Promise[Assertion]
 
@@ -242,10 +241,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
   "TryTBindRec f throw exception" in {
 
-    val tryTFutureInt: TryT[Future, Int] = BindRec[TryT[Future, ?]].tailrecM { a: Int =>
+    val tryTFutureInt: TryT[ContUnit, Int] = BindRec[TryT[ContUnit, ?]].tailrecM { a: Int =>
       throw AnotherBoom()
       TryT(
-        Future.now(Try[Int \/ Int](
+        ContUnit.now(Try[Int \/ Int](
           try {
             \/-(a)
           } catch {
@@ -254,7 +253,7 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
         )))
     }(0)
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(tryTFutureInt)
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
 
     val p = Promise[Assertion]
 
@@ -273,9 +272,9 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
     var flag: Int = 0
 
-    val tryTFutureInt: TryT[Future, Int] = BindRec[TryT[Future, ?]].tailrecM { a: Int =>
+    val tryTFutureInt: TryT[ContUnit, Int] = BindRec[TryT[ContUnit, ?]].tailrecM { a: Int =>
       TryT(
-        Future.now(Try[Int \/ Int](
+        ContUnit.now(Try[Int \/ Int](
           try {
             if (flag < 10000) {
               flag += 1
@@ -289,7 +288,7 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
         )))
     }(0)
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(tryTFutureInt)
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(tryTFutureInt)
 
     val p = Promise[Assertion]
 
@@ -306,10 +305,10 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
   "TryTParallelApplicative point without exception" in {
 
-    val tryTFutureInt: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point(1)
+    val tryTFutureInt: TryT[ContUnit, Int] @@ Parallel =
+      Applicative[Lambda[A => TryT[ContUnit, A] @@ Parallel]].point(1)
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
     val p = Promise[Assertion]
 
@@ -326,13 +325,13 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
   "TryTParallelApplicative point with exception" in {
 
-    val tryTFutureInt: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point {
+    val tryTFutureInt: TryT[ContUnit, Int] @@ Parallel =
+      Applicative[Lambda[A => TryT[ContUnit, A] @@ Parallel]].point {
         throw Boom()
         1
       }
 
-    val futureTryInt: Future[Try[Int]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
+    val futureTryInt: ContUnit[Try[Int]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
     val p = Promise[Assertion]
 
@@ -349,18 +348,18 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
   "TryTParallelApplicative ap without exception" in {
 
-    def fa: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point(1)
+    def fa: TryT[ContUnit, Int] @@ Parallel =
+      Applicative[Lambda[A => TryT[ContUnit, A] @@ Parallel]].point(1)
 
-    def f: TryT[Future, Int => String] @@ Parallel =
-      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point { int =>
+    def f: TryT[ContUnit, Int => String] @@ Parallel =
+      Applicative[Lambda[A => TryT[ContUnit, A] @@ Parallel]].point { int =>
         "String"
       }
 
-    val tryTFutureInt: TryT[Future, String] @@ Parallel =
-      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].ap(fa)(f)
+    val tryTFutureInt: TryT[ContUnit, String] @@ Parallel =
+      Applicative[Lambda[A => TryT[ContUnit, A] @@ Parallel]].ap(fa)(f)
 
-    val futureTryInt: Future[Try[String]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
+    val futureTryInt: ContUnit[Try[String]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
     val p = Promise[Assertion]
 
@@ -377,19 +376,19 @@ final class covariantSpec extends AsyncFreeSpec with Matchers with Inside {
 
   "TryTParallelApplicative ap with exception" in {
 
-    def fa: TryT[Future, Int] @@ Parallel =
-      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point(1)
+    def fa: TryT[ContUnit, Int] @@ Parallel =
+      Applicative[Lambda[A => TryT[ContUnit, A] @@ Parallel]].point(1)
 
-    def f: TryT[Future, Int => String] @@ Parallel =
-      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].point { int =>
+    def f: TryT[ContUnit, Int => String] @@ Parallel =
+      Applicative[Lambda[A => TryT[ContUnit, A] @@ Parallel]].point { int =>
         throw Boom()
         "String"
       }
 
-    val tryTFutureInt: TryT[Future, String] @@ Parallel =
-      Applicative[Lambda[A => TryT[Future, A] @@ Parallel]].ap(fa)(f)
+    val tryTFutureInt: TryT[ContUnit, String] @@ Parallel =
+      Applicative[Lambda[A => TryT[ContUnit, A] @@ Parallel]].ap(fa)(f)
 
-    val futureTryInt: Future[Try[String]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
+    val futureTryInt: ContUnit[Try[String]] = TryT.unwrap(Parallel.unwrap(tryTFutureInt))
 
     val p = Promise[Assertion]
 

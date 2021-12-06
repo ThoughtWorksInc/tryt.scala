@@ -12,7 +12,7 @@ private[tryt] trait InvariantInstances { this: TryT.type =>
       TryT(monad.map(a)(scala.util.Success(_)))
     }
 
-    override implicit def apply[G[_]: Monad]: Monad[TryT[G, ?]] = tryTMonadError[G]
+    override implicit def apply[G[_]: Monad]: Monad[TryT[G, _]] = tryTMonadError[G]
   }
 
 }
