@@ -7,9 +7,14 @@ libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.4.0-M9"
 
 libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.4.0-M9"
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.8" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.10" % Test
 
-addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full)
+libraryDependencies ++= {
+  CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((3, _))  => Nil
+    case Some((2, 13)) => Seq(compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full))
+  }
+}
 
 ThisBuild / scalacOptions ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
