@@ -43,7 +43,7 @@ lazy val covariantJS = covariant.js
 
 organization in ThisBuild := "com.thoughtworks.tryt"
 
-publish / skip := false
+publish / skip := true
 
 enablePlugins(ScalaUnidocPlugin)
 
