@@ -6,7 +6,7 @@ addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
 
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.1.1")
 
-addSbtPlugin("com.thoughtworks.example" % "sbt-example" % "7.0.1")
+addSbtPlugin("com.thoughtworks.example" % "sbt-example" % "9.0.0")
 
 addSbtPlugin("com.thoughtworks.sbt-scala-js-map" % "sbt-scala-js-map" % "4.1.1")
 
