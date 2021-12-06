@@ -38,7 +38,7 @@ lazy val invariant = crossProject(JSPlatform, JVMPlatform)
 
 organization in ThisBuild := "com.thoughtworks.tryt"
 
-publish / skip := false
+publish / skip := true
 
 enablePlugins(ScalaUnidocPlugin)
 
