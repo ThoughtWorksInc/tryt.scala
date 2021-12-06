@@ -29,9 +29,9 @@ def copySource(fromProject: Project) = {
   }
 }
 
-lazy val invariant = crossProject.crossType(CrossType.Pure)
+lazy val invariant = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
 
-lazy val covariant = crossProject.crossType(CrossType.Pure)
+lazy val covariant = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure)
 
 lazy val invariantJVM = invariant.jvm.settings(copySource(covariantJVM))
 
@@ -49,6 +49,6 @@ enablePlugins(ScalaUnidocPlugin)
 
 unidocProjectFilter in ScalaUnidoc in unidoc := inProjects(invariantJVM, covariantJVM)
 
-addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+
 
 scalacOptions += "-Xexperimental"

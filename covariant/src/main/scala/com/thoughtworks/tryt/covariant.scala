@@ -41,8 +41,8 @@ object covariant {
     /** @group Type classes */
     implicit final def tryTMonadCatchIORec[F[+ _]](
         implicit F0: MonadIO[F],
-        B0: BindRec[F]): MonadCatchIO[TryT[F, ?]] with BindRec[TryT[F, ?]] = {
-      new MonadCatchIO[TryT[F, ?]] with TryTBindRec[F] with TryTLiftIO[F] with TryTMonadError[F] {
+        B0: BindRec[F]): MonadCatchIO[TryT[F, _]] with BindRec[TryT[F, _]] = {
+      new MonadCatchIO[TryT[F, _]] with TryTBindRec[F] with TryTLiftIO[F] with TryTMonadError[F] {
         override implicit def B: BindRec[F] = B0
         override implicit def F: MonadIO[F] = F0
       }
@@ -52,18 +52,18 @@ object covariant {
   private[tryt] sealed abstract class TryTInstances3 { this: TryT.type =>
 
     /** @group Type classes */
-    implicit final def tryTMonadCatchIO[F[+ _]](implicit F0: MonadIO[F]): MonadCatchIO[TryT[F, ?]] = {
-      new MonadCatchIO[TryT[F, ?]] with TryTLiftIO[F] with TryTMonadError[F] {
+    implicit final def tryTMonadCatchIO[F[+ _]](implicit F0: MonadIO[F]): MonadCatchIO[TryT[F, _]] = {
+      new MonadCatchIO[TryT[F, _]] with TryTLiftIO[F] with TryTMonadError[F] {
         override implicit def F: MonadIO[F] = F0
       }
     }
 
     /** @group Type classes */
     implicit final def tryTParallelApplicative[F[+ _]](
-        implicit F0: Applicative[Lambda[A => F[A] @@ Parallel]],
-        S0: Semigroup[Throwable]): Applicative[Lambda[A => TryT[F, A] @@ Parallel]] = {
+        implicit F0: Applicative[λ[A => F[A] @@ Parallel]],
+        S0: Semigroup[Throwable]): Applicative[λ[A => TryT[F, A] @@ Parallel]] = {
       new TryTParallelApplicative[F] {
-        override implicit def F: Applicative[Lambda[A => F[A] @@ Parallel]] = F0
+        override implicit def F: Applicative[λ[A => F[A] @@ Parallel]] = F0
         override implicit def S: Semigroup[Throwable] = S0
       }
     }
@@ -74,7 +74,7 @@ object covariant {
     /** @group Type classes */
     implicit final def tryTBindRec[F[+ _]](
         implicit F0: Monad[F],
-        B0: BindRec[F]): BindRec[TryT[F, ?]] with MonadError[TryT[F, ?], Throwable] = {
+        B0: BindRec[F]): BindRec[TryT[F, _]] with MonadError[TryT[F, _], Throwable] = {
       new TryTBindRec[F] with TryTMonadError[F] {
         override implicit def B: BindRec[F] = B0
         override implicit def F: Monad[F] = F0
@@ -85,7 +85,7 @@ object covariant {
   private[tryt] sealed abstract class TryTInstances1 extends TryTInstances2 { this: TryT.type =>
 
     /** @group Type classes */
-    implicit final def tryTMonadError[F[+ _]](implicit F0: Monad[F]): MonadError[TryT[F, ?], Throwable] = {
+    implicit final def tryTMonadError[F[+ _]](implicit F0: Monad[F]): MonadError[TryT[F, _], Throwable] = {
       new TryTMonadError[F] {
         implicit override def F: Monad[F] = F0
       }
@@ -95,13 +95,13 @@ object covariant {
   private[tryt] sealed abstract class TryTInstances0 extends TryTInstances1 { this: TryT.type =>
 
     /** @group Type classes */
-    implicit final def tryTLiftIO[F[+ _]](implicit F0: LiftIO[F]): LiftIO[TryT[F, ?]] =
+    implicit final def tryTLiftIO[F[+ _]](implicit F0: LiftIO[F]): LiftIO[TryT[F, _]] =
       new TryTLiftIO[F] {
         implicit override def F: LiftIO[F] = F0
       }
 
     /** @group Type classes */
-    implicit final def tryTFunctor[F[+ _]](implicit F0: Functor[F]): Functor[TryT[F, ?]] =
+    implicit final def tryTFunctor[F[+ _]](implicit F0: Functor[F]): Functor[TryT[F, _]] =
       new TryTFunctor[F] {
         implicit override def F: Functor[F] = F0
       }
@@ -109,7 +109,7 @@ object covariant {
 
   import opacityTypes._
 
-  private[tryt] trait TryTFunctor[F[+ _]] extends Functor[TryT[F, ?]] {
+  private[tryt] trait TryTFunctor[F[+ _]] extends Functor[TryT[F, _]] {
     implicit protected def F: Functor[F]
 
     override def map[A, B](fa: TryT[F, A])(f: A => B): TryT[F, B] = {
@@ -121,7 +121,7 @@ object covariant {
     }
   }
 
-  private[tryt] trait TryTBind[F[+ _]] extends Bind[TryT[F, ?]] with TryTFunctor[F] {
+  private[tryt] trait TryTBind[F[+ _]] extends Bind[TryT[F, _]] with TryTFunctor[F] {
     implicit protected override def F: Monad[F]
 
     override def bind[A, B](fa: TryT[F, A])(f: A => TryT[F, B]): TryT[F, B] = opacityTypes {
@@ -140,13 +140,13 @@ object covariant {
     }
   }
 
-  private[tryt] trait TryTBindRec[F[+ _]] extends BindRec[TryT[F, ?]] with TryTBind[F] {
+  private[tryt] trait TryTBindRec[F[+ _]] extends BindRec[TryT[F, _]] with TryTBind[F] {
     implicit protected def F: Monad[F]
     implicit protected def B: BindRec[F]
 
-    override def tailrecM[A, B](f: A => TryT[F, A \/ B])(a: A): TryT[F, B] = {
+    override def tailrecM[A, B](a: A)(f: A => TryT[F, A \/ B]): TryT[F, B] = {
 
-      val fTryB: F[Try[B]] = B.tailrecM[A, Try[B]](a =>
+      val fTryB: F[Try[B]] = B.tailrecM[A, Try[B]](a)((a: A) =>
         Try(f(a)) match {
           case Success(tryT) =>
             F.map(opacityTypes.unwrap(tryT)) {
@@ -155,16 +155,16 @@ object covariant {
               case Success(\/-(b)) =>
                 \/-(Success(b))
               case Success(left @ -\/(_)) =>
-                left
+                left.map(Try(_))
             }
           case Failure(e) =>
             F.point(\/-(Failure(e)))
-      })(a)
+      })
       opacityTypes(fTryB)
     }
   }
 
-  private[tryt] trait TryTLiftIO[F[+ _]] extends LiftIO[TryT[F, ?]] {
+  private[tryt] trait TryTLiftIO[F[+ _]] extends LiftIO[TryT[F, _]] {
     implicit protected def F: LiftIO[F]
 
     override def liftIO[A](ioa: IO[A]): TryT[F, A] = {
@@ -173,7 +173,7 @@ object covariant {
 
   }
 
-  private[tryt] trait TryTMonadError[F[+ _]] extends MonadError[TryT[F, ?], Throwable] with TryTBind[F] {
+  private[tryt] trait TryTMonadError[F[+ _]] extends MonadError[TryT[F, _], Throwable] with TryTBind[F] {
     implicit protected override def F: Monad[F]
 
     override def point[A](a: => A): TryT[F, A] = opacityTypes.apply(F.point(Try(a)))
@@ -199,8 +199,8 @@ object covariant {
     }
   }
 
-  private[tryt] trait TryTParallelApplicative[F[+ _]] extends Applicative[Lambda[A => TryT[F, A] @@ Parallel]] {
-    implicit protected def F: Applicative[Lambda[A => F[A] @@ Parallel]]
+  private[tryt] trait TryTParallelApplicative[F[+ _]] extends Applicative[λ[A => TryT[F, A] @@ Parallel]] {
+    implicit protected def F: Applicative[λ[A => F[A] @@ Parallel]]
     implicit protected def S: Semigroup[Throwable]
     private type T[+A] = TryT[F, A]
     private type P[A] = T[A] @@ Parallel
