@@ -47,7 +47,7 @@ unidocProjectFilter in ScalaUnidoc in unidoc := inProjects(invariant.jvm, covari
 libraryDependencies ++= {
   CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((3, _))  => Nil
-    case Some((2, 13)) => Seq(compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full))
+    case Some((2, 13)) => Seq(compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full))
   }
 }
 
