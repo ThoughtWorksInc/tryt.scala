@@ -3,9 +3,9 @@ enablePlugins(Example)
 import scala.meta._
 exampleSuperTypes += init"_root_.org.scalatest.Inside"
 
-libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.4.0-M12"
+libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.4.0-M14"
 
-libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.4.0-M12"
+libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.4.0-M14"
 
 libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.12" % Test
 
